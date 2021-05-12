@@ -1,0 +1,2 @@
+[workspace]
+members = ["corporate-assistant", "record", "transcriber", "github-crawler"]
