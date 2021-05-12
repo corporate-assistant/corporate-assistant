@@ -10,9 +10,13 @@ jobs:
       - name: Install system dependencies
         run:  sudo apt-get install -y speech-dispatcher libspeechd-dev
       - name: Install deepspeech native client
-        run: wget --no-check-certificate https://github.com/mozilla/DeepSpeech/releases/download/v0.9.3/native_client.amd64.cpu.linux.tar.xz
-        run: pwd
-        run: ls
+        run: |
+          wget --no-check-certificate https://github.com/mozilla/DeepSpeech/releases/download/v0.9.3/native_client.amd64.cpu.linux.tar.xz
+          pwd
+          ls
+          tar -xJf  native_client.amd64.cpu.linux.tar.xz
+      - env:
+        LIBRARY_PATH: $GITHUB_WORKSPACE
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
@@ -21,7 +25,6 @@ jobs:
           override: true
       - name: Building corporate-assistant
       - uses: actions-rs/cargo@v1
-        with:
           command: build
           args: --release
 
