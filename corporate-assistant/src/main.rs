@@ -101,6 +101,10 @@ fn main() {
     // Get requested action
     intents.get_action(&result).expect("No action found").Run(&mut tts);
 
+    // If action is not present then recognition went wrong due to mic problems
+    // or poor recognition of phrase recorded.
+    // TODO(jczaja): Make a mechanism for asking if recording can saved as file and shared with
+    // project developers
 }
 
 
