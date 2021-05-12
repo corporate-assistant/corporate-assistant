@@ -1,0 +1,58 @@
+query UserPrView($login: String!) {
+  user(login: $login) {
+    company
+    email
+    contributionsCollection {
+      pullRequestContributionsByRepository {
+        contributions(first: 20) {
+          nodes {
+            pullRequest {
+              title
+              state
+              closedAt
+              mergedAt
+              number
+            }
+          }
+          pageInfo {
+            endCursor
+            hasNextPage
+          }
+        }
+        repository {
+          name
+        }
+      }
+    }
+  }
+}
+
+query UserPrViewNext($login: String!
+                     $afterCursor: String!) {
+  user(login: $login) {
+    company
+    email
+    contributionsCollection {
+      pullRequestContributionsByRepository {
+        contributions(first: 4, after: $afterCursor) {
+          nodes {
+            pullRequest {
+              title
+              state
+              closedAt
+              mergedAt
+              number
+            }
+          }
+          pageInfo {
+            endCursor
+            hasNextPage
+          }
+        }
+        repository {
+          name
+        }
+      }
+    }
+  }
+}

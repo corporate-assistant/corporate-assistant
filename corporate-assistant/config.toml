@@ -1,0 +1,5 @@
+[github]
+user = "jczaja"
+token = "1ced27e7d320189e163e559dec6e8c45cab049a0"
+repos = ["Paddle"]
+url = "https://api.github.com/graphql"
