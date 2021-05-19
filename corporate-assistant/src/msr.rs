@@ -14,7 +14,7 @@ pub mod actions {
           from_date: chrono::Utc::now() - chrono::Duration::weeks(4),
           to_date: chrono::Utc::now(),
           //TODO: Make it read from HOME
-          config_file: String::from("/home/jczaja/DEEPSPEECH/corporate-assistant/corporate-assistant/config.toml"),
+          config_file: String::from("/home/jczaja/corporate-assistant/corporate-assistant/config.toml"),
           behind_proxy: true,
       };
 

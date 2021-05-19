@@ -99,8 +99,16 @@ fn main() {
     ], Rc::new(msr::actions::MSR::new())).expect("Registration failed");
 
     // Get requested action
-    intents.get_action(&result).expect("No action found").Run(&mut tts);
+    //let action = intents.get_action(&result);
 
+    let action = intents.get_action(&result);
+
+    // Let's match e.g. If phrase not recognized then execute dumping
+    // if proper Action object returned then execute it
+    match action {
+        Ok(action) => action.Run(&mut tts),
+        Err(action) => println!("No action found for : {}", action), 
+    }
 }
 
 
