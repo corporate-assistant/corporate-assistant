@@ -172,7 +172,7 @@ else # No streaming
 # record 4 seconds or less if SIGKILL
 #filename=/tmp/`cat /dev/urandom | tr -cd 'a-f0-9' | head -c 8`
 #arecord -r 16000 -d 4 -f S16_LE $filename.wav
-transcription=`LD_LIBRARY_PATH=/home/jczaja/DEEPSPEECH/deepspeech-native/ /home/jczaja/DEEPSPEECH/corporate-assistant/target/release/transcriber --model=$candidate_model --scorer=$scorer 2>/dev/null`
+transcription=`LD_LIBRARY_PATH=/home/jczaja/DEEPSPEECH/deepspeech-native/ /home/jczaja/DEEPSPEECH/transcriber/target/release/transcriber --model=$candidate_model --scorer=$scorer 2>/dev/null`
 
 # generation of transcription
 #transcription=`deepspeech --model $candidate_model --scorer=$scorer --audio $filename.wav 2>/dev/null`
