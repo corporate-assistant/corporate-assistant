@@ -5,6 +5,8 @@ extern crate deepspeech;
 use clap::{App, Arg};
 
 use std::fs::File;
+use std::fs::create_dir_all;
+use std::fs::OpenOptions;
 use std::path::Path;
 use std::io;
 use std::{thread, time};
@@ -78,13 +80,13 @@ fn main() {
     // if only utterance is completed
     let mut tts = TTS::default().expect("Problem starting TTS engine");
     let rec = Recorder::new();
-    tts.speak("I'm listening", true).expect("Problem wih utterance");
+    tts.speak("I'm listening", true).expect("Problem with utterance");
     // TTS finished talking e.g. sending data to speaker
     while tts.is_speaking().unwrap() == true {};
     //.. yet we need to wait so that recorder did not pick up still hearable sound
     let canceling_pause = time::Duration::from_millis(400);
     thread::sleep(canceling_pause);
-    let (recorded_vec, _channels, _freq) = rec.record().expect("Problem with recording audio");
+    let (recorded_vec, channels, freq) = rec.record().expect("Problem with recording audio");
     result = m.speech_to_text(&recorded_vec).unwrap();
     // Output the result
     eprintln!("Transcription:");
@@ -96,7 +98,12 @@ fn main() {
                                  "compose monthly status report".to_string(),
                                  "create my monthly status report".to_string(),
                                  "create monthly status report".to_string(),
-    ], Rc::new(msr::actions::MSR::new())).expect("Registration failed");
+    ], Rc::new(msr::actions::MSR::new(4))).expect("Registration failed");
+    intents.register_action(vec!["compose my weekly status report".to_string(),
+                                 "compose weekly status report".to_string(),
+                                 "create my weekly status report".to_string(),
+                                 "create weekly status report".to_string(),
+    ], Rc::new(msr::actions::MSR::new(1))).expect("Registration failed");
 
     // Get requested action
     //let action = intents.get_action(&result);
@@ -107,7 +114,16 @@ fn main() {
     // if proper Action object returned then execute it
     match action {
         Ok(action) => action.Run(&mut tts),
-        Err(action) => println!("No action found for : {}", action), 
+        Err(action) => {
+            println!("No action found for : {}", action);
+            // Announce that request is unknown
+            tts.speak("I do not understand", true).expect("Error: Problem with utterance");
+            // Create directory for unrecognized requests if needed
+            let unrecognized_dir = "unrecognized_content";
+            create_dir_all(unrecognized_dir).expect("Error: unable to create directory: unrecognized");
+            // Save unrecognized audio into directory
+            rec.store(&recorded_vec, channels, freq, unrecognized_dir, &result).expect("Saving unrecognized command failed!");
+        }, 
     }
 }
 
