@@ -7,11 +7,17 @@ pub mod actions {
 
 
     fn Run(&self, tts : &mut tts::TTS) -> () {
-      tts.speak("Composing monthly status report", true).expect("Problem with utterance");
+      let time_frame = match self.time_frame {
+          1 => "weekly",
+          4 => "monthly",
+          _ => panic!("Error: Unsupported time frame value {}", self.time_frame),
+      };
+      let feedback = "Composing ".to_string() + time_frame + " status report";
+      tts.speak(feedback, true).expect("Problem with utterance");
 
       // Make some test of github crawler
       let conf = Conf {
-          from_date: chrono::Utc::now() - chrono::Duration::weeks(4),
+          from_date: chrono::Utc::now() - chrono::Duration::weeks(self.time_frame as i64),
           to_date: chrono::Utc::now(),
           //TODO: Make it read from HOME
           config_file: String::from("/home/jczaja/corporate-assistant/corporate-assistant/config.toml"),
@@ -26,13 +32,14 @@ pub mod actions {
   }
 
   pub struct MSR {
-
+    time_frame : u8,
   }
  
   impl MSR {
 
-    pub fn new() -> Self {
+    pub fn new(time_frame : u8) -> Self {
         MSR {
+            time_frame : time_frame,
         }
     }
 

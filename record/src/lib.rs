@@ -12,6 +12,7 @@ pub mod recorder {
     use std::fs;
     use std::io::prelude::*;
     use std::path::Path;
+    use std::path::PathBuf;
 
     const RECORDING_LENGTH_SECONDS: usize = 3;
 
@@ -149,26 +150,28 @@ pub mod recorder {
             s+&(now.format("-%Y-%m-%d").to_string())+".wav"
         }
 
-        // TODO: fixing
-
-        fn save_wav(&self, cwd : &Option<str>, channels : u16, freq : u32, recorded_vec: &Vec<i16>) -> Result<(), String> 
+        fn save_wav(&self, cwd : Option<&str>, channels : u16, freq : u32, recorded_vec: &Vec<i16>) -> Result<String, String> 
         {
+            let mut file_name = match cwd {
+                None => PathBuf::from(""),
+                Some(cwd) => PathBuf::from(cwd),
+            };
+                
+            let basename = self.generate_file_name();
+            file_name.push(&basename);
 
-            let mut file_name = Path::new();
-            file_name.push(self.generate_file_name());
-
-            println!("Saving data to {}", file_name);
-            let mut out_file = File::create(Path::new(file_name)).expect("Unable to open file");
+            println!("Saving data to {}", file_name.to_str().expect("Cannot print path to save wav to!"));
+            let mut out_file = File::create(file_name.as_path()).expect("Unable to open file");
             let header = wav::Header::new(1, channels, freq, 16); 
             let bit_depth = wav::BitDepth::Sixteen(recorded_vec.clone());
             wav::write(header, &bit_depth, &mut out_file).expect("Problem writting data");
             
-            Ok(())
+            Ok(basename)
         }
 
         /// Create database file if it does not exist or open existing one and append wav metadata
         /// Put given metadat of wav into database
-        fn add_wav_to_database(&self, database_name : &std::path::PathBuf, wav_name : &str, text : &str) -> std::io::Result<()>
+        fn add_wav_to_database(&self, database_name : &std::path::PathBuf, cwd : Option<&str>, wav_name : &str, text : &str) -> std::io::Result<()>
         {
           let mut db_file = OpenOptions::new()
                     .read(false)
@@ -187,7 +190,13 @@ pub mod recorder {
           db_file.write_all(",".as_bytes())?;
 
           // Get audio sample size and append to database
-          let wav_size = fs::metadata(wav_name).unwrap().len().to_string();
+          let mut full_wav_name = match cwd {
+              None => PathBuf::from(""),
+              Some(cwd) => PathBuf::from(cwd),
+          };
+          full_wav_name.push(wav_name);
+
+          let wav_size = fs::metadata(full_wav_name).unwrap().len().to_string();
           db_file.write_all(wav_size.as_bytes())?;
           db_file.write_all(",".as_bytes())?;
 
@@ -213,9 +222,9 @@ pub mod recorder {
                 self.calculate_max_volume(&recorded_vec)
             );
 
-            self.save_wav(None, channels, freq, &recorded_vec ).expect("Saving Wav did not quite succeeded");
+            let basename = self.save_wav(None, channels, freq, &recorded_vec ).expect("Saving Wav did not quite succeeded");
 
-            self.add_wav_to_database(database_name, None, text ).expect("Writing recorded audio info to database failed"); 
+            self.add_wav_to_database(database_name, None, &basename, text ).expect("Writing recorded audio info to database failed"); 
 
           Ok(())
         }
@@ -227,8 +236,8 @@ pub mod recorder {
             database_name.push(unrecognized_dir);
             database_name.push("failures.csv");
 
-            self.save_wav(Some(unrecognized_dir), channels, freq, &recorded_vec ).expect("Saving Wav did not quite succeeded");
-            self.add_wav_to_database(&database_name, Some(unrecognized_dir), text ).expect("Writing recorded audio info to database failed"); 
+            let basename = self.save_wav(Some(unrecognized_dir), channels, freq, &recorded_vec ).expect("Saving Wav did not quite succeeded");
+            self.add_wav_to_database(&database_name, Some(unrecognized_dir), &basename, text ).expect("Writing recorded audio info to database failed"); 
 
           Ok(())
         }
