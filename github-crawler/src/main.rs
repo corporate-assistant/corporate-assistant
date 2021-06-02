@@ -3,11 +3,9 @@ use prettytable::*;
 use std::env;
 use std::str::FromStr;
 
-pub use github_crawler::{get_contributions,RepoContribs,Contrib,Conf, parse_config};
+pub use github_crawler::{get_contributions, parse_config, Conf, Contrib, RepoContribs};
 
 type DateTime = String;
-
-
 
 fn parse_date(s: &str) -> Option<chrono::DateTime<chrono::Utc>> {
     let values: Vec<_> = s.split(".").collect();
@@ -58,7 +56,6 @@ fn parse_cmdline() -> Conf {
     }
 }
 
-
 fn print_table(repo_contribs: &RepoContribs) -> () {
     let mut pr_table = prettytable::Table::new();
     pr_table.add_row(row!(b => "repo", "number", "title", "merging date"));
@@ -102,7 +99,7 @@ fn main() -> Result<(), anyhow::Error> {
     let config_file = conf.config_file.clone();
     let config = parse_config(config_file);
 
-    let contribs = get_contributions(conf, config );
+    let contribs = get_contributions(conf, config);
 
     print_table(&contribs);
     print_text(&contribs);
