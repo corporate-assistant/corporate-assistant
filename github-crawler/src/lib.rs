@@ -1,6 +1,3 @@
-
-
-
 use chrono;
 use graphql_client::*;
 use std::collections::HashMap;
@@ -8,7 +5,7 @@ use std::env;
 use std::str::FromStr;
 
 pub mod config_parser;
-pub use crate::config_parser::{parse_config};
+pub use crate::config_parser::parse_config;
 
 type DateTime = String;
 #[derive(graphql_client::GraphQLQuery)]
@@ -77,7 +74,6 @@ fn build_client(behind_proxy: bool) -> reqwest::Client {
     }
     */
 }
-
 
 #[derive(Debug)]
 pub struct Contrib {
@@ -208,8 +204,7 @@ pub struct Conf {
     pub config_file: String,
 }
 
-pub fn get_contributions(conf : Conf, config : config_parser::GithubConfig) -> RepoContribs {
-        
+pub fn get_contributions(conf: Conf, config: config_parser::GithubConfig) -> RepoContribs {
     let github_user = &config.user;
 
     let github_url = &config.url;
@@ -227,7 +222,8 @@ pub fn get_contributions(conf : Conf, config : config_parser::GithubConfig) -> R
         .post(github_url)
         .bearer_auth(&github_api_token)
         .json(&q)
-        .send().expect("Sener error");
+        .send()
+        .expect("Sener error");
 
     let response_body: Response<user_pr_view::ResponseData> = res.json().expect("Reposne error");
 
@@ -248,9 +244,11 @@ pub fn get_contributions(conf : Conf, config : config_parser::GithubConfig) -> R
             .post(github_url)
             .bearer_auth(&github_api_token)
             .json(&q)
-            .send().expect("Yet another sending error");
+            .send()
+            .expect("Yet another sending error");
 
-        let response_body: Response<user_pr_view_next::ResponseData> = res.json().expect("Yet another resposne error");
+        let response_body: Response<user_pr_view_next::ResponseData> =
+            res.json().expect("Yet another resposne error");
         let (after_cursor, next_contribs) = get_repo_contribs_next(
             &response_body.data.expect("missing response data"),
             &config.repos,
@@ -266,6 +264,3 @@ pub fn get_contributions(conf : Conf, config : config_parser::GithubConfig) -> R
     }
     contribs
 }
-
-
-
