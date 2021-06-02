@@ -25,7 +25,6 @@ jobs:
           override: true
       - name: Building corporate-assistant
       - uses: actions-rs/cargo@v1
+        with:
           command: check
-
-
 
