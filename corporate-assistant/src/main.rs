@@ -106,8 +106,6 @@ fn main() {
     ], Rc::new(msr::actions::MSR::new(1))).expect("Registration failed");
 
     // Get requested action
-    //let action = intents.get_action(&result);
-
     let action = intents.get_action(&result);
 
     // Let's match e.g. If phrase not recognized then execute dumping
