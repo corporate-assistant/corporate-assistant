@@ -15,8 +15,8 @@ jobs:
           pwd
           ls
           tar -xJf  native_client.amd64.cpu.linux.tar.xz
-      - env:
-        LIBRARY_PATH: $GITHUB_WORKSPACE
+          #- env:
+          #LIBRARY_PATH: $GITHUB_WORKSPACE
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
