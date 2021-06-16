@@ -134,7 +134,7 @@ fn main() {
             tts.speak("I do not understand", true)
                 .expect("Error: Problem with utterance");
             // Make a GUI for helping user to label recording
-            let result = labeling_assistant::labeling_assistant::run(&result);
+            let result = labeling_assistant::labeling_assistant::run(intents.get_commands(),&result);
             // Create directory for unrecognized requests if needed
             let unrecognized_dir = "unrecognized_content";
             create_dir_all(unrecognized_dir)
