@@ -220,6 +220,8 @@ pub mod recorder {
             db_file.write_all(text.as_bytes())?;
             db_file.write_all("\n".as_bytes())?;
 
+            println!("Sample: {} stored with label: \"{}\"", wav_name, text);
+
             Ok(())
         }
 
