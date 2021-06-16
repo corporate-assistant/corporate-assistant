@@ -25,13 +25,22 @@ pub mod interpreter {
             Ok(())
         }
 
-        // TODO(expand this)
         pub fn get_action(&self, key: &str) -> Result<Rc<dyn CorporateAction>, String> {
             if self.intents.contains_key(key) {
                 Ok(self.intents[key].clone())
             } else {
                 Err(format!("Action \"{}\" not recognized", key) as String)
             }
+        }
+
+        pub fn get_commands(&self) -> Vec<&str> {
+            let mut commands: Vec<&str> = Vec::new();
+
+            for command in self.intents.keys() {
+                commands.push(command);
+            }
+
+            commands
         }
 
         pub fn new() -> Self {
