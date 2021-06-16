@@ -17,8 +17,8 @@ use deepspeech::Model;
 use tts::*;
 
 pub use record::recorder::Recorder;
-mod msr; // Need this to know there is separate module in this project
-mod labeling_assistant; // Need this to know there is separate module in this project
+mod labeling_assistant;
+mod msr; // Need this to know there is separate module in this project // Need this to know there is separate module in this project
 use corporate_assistant::interpreter::CorporateAction; // Trait need to be visible in scope to be used
 
 // The model has been trained on this specific
@@ -134,7 +134,8 @@ fn main() {
             tts.speak("I do not understand", true)
                 .expect("Error: Problem with utterance");
             // Make a GUI for helping user to label recording
-            let result = labeling_assistant::labeling_assistant::run(intents.get_commands(),&result);
+            let result =
+                labeling_assistant::labeling_assistant::run(intents.get_commands(), &result);
             // Create directory for unrecognized requests if needed
             let unrecognized_dir = "unrecognized_content";
             create_dir_all(unrecognized_dir)

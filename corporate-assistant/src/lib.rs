@@ -34,7 +34,7 @@ pub mod interpreter {
         }
 
         pub fn get_commands(&self) -> Vec<&str> {
-            let mut commands : Vec<&str> = Vec::new();
+            let mut commands: Vec<&str> = Vec::new();
 
             for command in self.intents.keys() {
                 commands.push(command);
