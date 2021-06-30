@@ -25,7 +25,7 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - name: Install system dependencies
-          run:  sudo apt-get install -y speech-dispatcher libspeechd-dev libsdl2-dev
+          run:  sudo apt-get install -y speech-dispatcher libspeechd-dev libsdl2-dev libpango1.0-dev libpangox-1.0-dev
         - name: Install deepspeech native client
           env:
             LIBRARY_PATH: ./
@@ -34,7 +34,7 @@ jobs:
             pwd
             tar -xJf  native_client.amd64.cpu.linux.tar.xz
             ls
-            echo "LIBRARY_PATH: $LIBRARY_PATH"
+            echo "LIBRARY_PATH: $LIBRARY_PATH" >> $GITHUB_ENV
         - uses: actions/checkout@v2
         - uses: actions-rs/toolchain@v1
           with:
