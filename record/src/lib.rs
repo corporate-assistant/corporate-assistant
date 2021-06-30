@@ -24,8 +24,8 @@ pub mod recorder {
     }
 
     pub struct Recorder {
-        sdl_context : sdl2::Sdl,
-        audio_subsystem : sdl2::AudioSubsystem,
+        sdl_context: sdl2::Sdl,
+        audio_subsystem: sdl2::AudioSubsystem,
         capture_device: sdl2::audio::AudioDevice<Recording>,
         desired_spec: sdl2::audio::AudioSpecDesired,
         done_receiver: mpsc::Receiver<Vec<i16>>,
@@ -111,8 +111,8 @@ pub mod recorder {
                 capture_device.subsystem().current_audio_driver()
             );
             Self {
-                sdl_context : sdl_context,
-                audio_subsystem : audio_subsystem,
+                sdl_context: sdl_context,
+                audio_subsystem: audio_subsystem,
                 capture_device: capture_device,
                 desired_spec: desired_spec,
                 done_receiver: done_receiver,
@@ -303,7 +303,8 @@ pub mod recorder {
                 samples: None,
             };
 
-            let playback_device = self.audio_subsystem
+            let playback_device = self
+                .audio_subsystem
                 .open_playback(None, &desired_spec, |spec| {
                     println!("Playback Spec = {:?}", spec);
                     Player {

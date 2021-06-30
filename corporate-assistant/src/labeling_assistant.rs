@@ -4,14 +4,14 @@ pub mod labeling_assistant {
         app, button::Button, frame::Frame, prelude::*, text::TextBuffer, text::TextEditor,
         window::Window,
     };
-    pub use record::recorder::{Recorder};
+    pub use record::recorder::Recorder;
 
     pub fn run(
         rec: &Recorder,
         recorded_vec: Vec<i16>,
         commands_list: Vec<&str>,
         candidate_label: &str,
-    ) -> String {
+    ) -> Option<String> {
         let app = app::App::default();
         let mut wind = Window::default()
             .with_size(640, 768)
@@ -48,8 +48,9 @@ pub mod labeling_assistant {
         te.set_buffer(Some(tb));
         te.set_insert_mode(true);
         let mut custom_label = Button::default().with_size(50, 0).with_label("Ok");
-        let placeholder = Frame::default().with_size(100, 0);
+        let placeholder = Frame::default().with_size(80, 0);
         let mut player = Button::default().with_size(50, 0).with_label("Play");
+        let mut discard = Button::default().with_size(70, 0).with_label("Discard");
         hpack.end();
         let frame = Frame::default()
             .with_size(600, 50)
@@ -61,19 +62,23 @@ pub mod labeling_assistant {
         wind.show();
 
         /* Event handling */
-        custom_label.emit(s.clone(), String::from("text_editor"));
-        player.emit(s.clone(), String::from("play"));
+        custom_label.emit(s.clone(), String::from("_text_editor"));
+        player.emit(s.clone(), String::from("_play"));
+        discard.emit(s.clone(), String::from("_discard"));
 
         while app.wait() {
             let msg = r.recv();
             match &msg {
                 Some(msg) => {
-                    if msg == "text_editor" {
-                        return String::from(&te.buffer().unwrap().text());
-                    } else if msg == "play" {
+                    //println!("===> Recieved {}", &(msg.clone()));
+                    if msg == "_text_editor" {
+                        return Some(String::from(&te.buffer().unwrap().text()));
+                    } else if msg == "_play" {
                         rec.replay_recorded_vec(&recorded_vec);
+                    } else if msg == "_discard" {
+                        return None;
                     } else {
-                        return String::from(msg);
+                        return Some(String::from(msg));
                     }
                 }
                 _ => (),
@@ -81,6 +86,6 @@ pub mod labeling_assistant {
         }
 
         app.run().unwrap();
-        String::from("")
+        None
     }
 }

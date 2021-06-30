@@ -136,13 +136,21 @@ fn main() {
                 intents.get_commands(),
                 &result,
             );
-            // Create directory for unrecognized requests if needed
-            let unrecognized_dir = "unrecognized_content";
-            create_dir_all(unrecognized_dir)
-                .expect("Error: unable to create directory: unrecognized");
-            // Save unrecognized audio into directory
-            rec.store(&recorded_vec, channels, freq, unrecognized_dir, &result)
-                .expect("Saving unrecognized command failed!");
+            // If user decided to store recording then proceed
+            match result {
+                Some(result) => {
+                    // Create directory for unrecognized requests if needed
+                    let unrecognized_dir = "unrecognized_content";
+                    create_dir_all(unrecognized_dir)
+                        .expect("Error: unable to create directory: unrecognized");
+                    // Save unrecognized audio into directory
+                    rec.store(&recorded_vec, channels, freq, unrecognized_dir, &result)
+                        .expect("Saving unrecognized command failed!");
+                    tts.speak("Recording stored", true)
+                        .expect("Problem with utterance");
+                }
+                None => (),
+            };
         }
     }
 }
