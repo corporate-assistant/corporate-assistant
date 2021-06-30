@@ -27,14 +27,12 @@ jobs:
         - name: Install system dependencies
           run:  sudo apt-get install -y speech-dispatcher libspeechd-dev libsdl2-dev libpango1.0-dev libpangox-1.0-dev
         - name: Install deepspeech native client
-          env:
-            LIBRARY_PATH: ./
           run: |
             wget --no-check-certificate https://github.com/mozilla/DeepSpeech/releases/download/v0.9.3/native_client.amd64.cpu.linux.tar.xz
             pwd
             tar -xJf  native_client.amd64.cpu.linux.tar.xz
             ls
-            echo "LIBRARY_PATH: $LIBRARY_PATH" >> $GITHUB_ENV
+            echo "LIBRARY_PATH=./" >> $GITHUB_ENV
         - uses: actions/checkout@v2
         - uses: actions-rs/toolchain@v1
           with:
