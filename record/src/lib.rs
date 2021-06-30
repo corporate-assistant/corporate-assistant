@@ -10,9 +10,9 @@ pub mod recorder {
     use std::fs::OpenOptions;
     use std::i16;
     use std::io::prelude::*;
-    use std::path::Path;
     use std::path::PathBuf;
     use std::sync::mpsc;
+    use std::time::Duration;
 
     const RECORDING_LENGTH_SECONDS: usize = 3;
 
@@ -24,11 +24,29 @@ pub mod recorder {
     }
 
     pub struct Recorder {
+        sdl_context : sdl2::Sdl,
+        audio_subsystem : sdl2::AudioSubsystem,
         capture_device: sdl2::audio::AudioDevice<Recording>,
         desired_spec: sdl2::audio::AudioSpecDesired,
         done_receiver: mpsc::Receiver<Vec<i16>>,
     }
 
+    // Player
+    struct Player<'a> {
+        data: &'a Vec<i16>,
+        pos: usize,
+    }
+
+    impl<'a> AudioCallback for Player<'a> {
+        type Channel = i16;
+
+        fn callback(&mut self, out: &mut [i16]) {
+            for dst in out.iter_mut() {
+                *dst = *self.data.get(self.pos).unwrap_or(&0);
+                self.pos += 1;
+            }
+        }
+    }
     // Append the input of the callback to the record_buffer.
     // When the record_buffer is full, send it to the main thread via done_sender.
     impl AudioCallback for Recording {
@@ -93,6 +111,8 @@ pub mod recorder {
                 capture_device.subsystem().current_audio_driver()
             );
             Self {
+                sdl_context : sdl_context,
+                audio_subsystem : audio_subsystem,
                 capture_device: capture_device,
                 desired_spec: desired_spec,
                 done_receiver: done_receiver,
@@ -272,6 +292,32 @@ pub mod recorder {
                 .expect("Writing recorded audio info to database failed");
 
             Ok(())
+        }
+
+        pub fn replay_recorded_vec(&self, recorded_vec: &Vec<i16>) -> () {
+            println!("Playing...");
+
+            let desired_spec = AudioSpecDesired {
+                freq: Some(16000), //        freq: None,
+                channels: Some(1),
+                samples: None,
+            };
+
+            let playback_device = self.audio_subsystem
+                .open_playback(None, &desired_spec, |spec| {
+                    println!("Playback Spec = {:?}", spec);
+                    Player {
+                        data: recorded_vec,
+                        pos: 0,
+                    }
+                })
+                .expect("Error opening playback");
+
+            // Start playback
+            playback_device.resume();
+
+            std::thread::sleep(Duration::from_secs(RECORDING_LENGTH_SECONDS as u64));
+            // Device is automatically closed when dropped
         }
     }
 }

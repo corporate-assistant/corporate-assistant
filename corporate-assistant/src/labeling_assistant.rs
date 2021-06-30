@@ -4,8 +4,14 @@ pub mod labeling_assistant {
         app, button::Button, frame::Frame, prelude::*, text::TextBuffer, text::TextEditor,
         window::Window,
     };
+    pub use record::recorder::{Recorder};
 
-    pub fn run(commands_list: Vec<&str>, candidate_label: &str) -> String {
+    pub fn run(
+        rec: &Recorder,
+        recorded_vec: Vec<i16>,
+        commands_list: Vec<&str>,
+        candidate_label: &str,
+    ) -> String {
         let app = app::App::default();
         let mut wind = Window::default()
             .with_size(640, 768)
@@ -42,6 +48,8 @@ pub mod labeling_assistant {
         te.set_buffer(Some(tb));
         te.set_insert_mode(true);
         let mut custom_label = Button::default().with_size(50, 0).with_label("Ok");
+        let placeholder = Frame::default().with_size(100, 0);
+        let mut player = Button::default().with_size(50, 0).with_label("Play");
         hpack.end();
         let frame = Frame::default()
             .with_size(600, 50)
@@ -54,6 +62,7 @@ pub mod labeling_assistant {
 
         /* Event handling */
         custom_label.emit(s.clone(), String::from("text_editor"));
+        player.emit(s.clone(), String::from("play"));
 
         while app.wait() {
             let msg = r.recv();
@@ -61,6 +70,8 @@ pub mod labeling_assistant {
                 Some(msg) => {
                     if msg == "text_editor" {
                         return String::from(&te.buffer().unwrap().text());
+                    } else if msg == "play" {
+                        rec.replay_recorded_vec(&recorded_vec);
                     } else {
                         return String::from(msg);
                     }
