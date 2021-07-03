@@ -2,7 +2,6 @@ pub mod interpreter {
 
     use std::collections::HashMap;
     use std::rc::Rc;
-    use tts::*;
 
     pub trait CorporateAction {
         fn Run(&self, tts: &mut tts::TTS) -> ();
