@@ -40,4 +40,8 @@ jobs:
         - name: Cargo build
           env:
             LIBRARY_PATH: ./
-          run: cargo build --release
+          run: |
+            ls
+            pwd
+            LD_LIBRARY_PATH=`pwd` cargo build --release
+
