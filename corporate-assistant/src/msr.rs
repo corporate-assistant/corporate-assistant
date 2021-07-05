@@ -1,7 +1,6 @@
 pub mod actions {
     use corporate_assistant::interpreter::CorporateAction;
     pub use github_crawler::{get_contributions, parse_config, Conf, Contrib, RepoContribs};
-    use std::rc::Rc;
 
     impl CorporateAction for MSR {
         fn Run(&self, tts: &mut tts::TTS) -> () {
@@ -68,31 +67,28 @@ pub mod actions {
 
     #[cfg(test)]
     mod tests {
-        use std::rc::Rc;
         use super::*;
+        use std::rc::Rc;
         #[test]
         fn test_register() -> Result<(), String> {
-          let mut intents = corporate_assistant::interpreter::Intents::new();
-          intents
-              .register_action(
-                  vec![
-                      "compose my monthly status report".to_string(),
-                      "compose monthly status report".to_string(),
-                      "create my monthly status report".to_string(),
-                      "create monthly status report".to_string(),
-                  ],
-                  Rc::new(MSR::new(4)),
-              )
-              .expect("Registration failed");
-          // Get registered action 
-          let action = intents.get_action("compose my monthly status report");
-          match  action {
-            Ok(action) => Ok(()),
-            Err(action) => Err(String::from("Error getting an action")),
-          }    
+            let mut intents = corporate_assistant::interpreter::Intents::new();
+            intents
+                .register_action(
+                    vec![
+                        "compose my monthly status report".to_string(),
+                        "compose monthly status report".to_string(),
+                        "create my monthly status report".to_string(),
+                        "create monthly status report".to_string(),
+                    ],
+                    Rc::new(MSR::new(4)),
+                )
+                .expect("Registration failed");
+            // Get registered action
+            let action = intents.get_action("compose my monthly status report");
+            match action {
+                Ok(action) => Ok(()),
+                Err(action) => Err(String::from("Error getting an action")),
+            }
         }
     }
 }
-
-
-
