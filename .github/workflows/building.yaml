@@ -40,6 +40,16 @@ jobs:
             pwd
             tar -xJf  native_client.amd64.cpu.linux.tar.xz
             ls
-            echo "LIBRARY_PATH=./" >> $GITHUB_ENV
             LD_LIBRARY_PATH=`pwd` cargo build --release
+        - name: Cargo test
+          env:
+            LIBRARY_PATH: ./
+          run: |
+            ls
+            pwd
+            wget --no-check-certificate https://github.com/mozilla/DeepSpeech/releases/download/v0.9.3/native_client.amd64.cpu.linux.tar.xz
+            pwd
+            tar -xJf  native_client.amd64.cpu.linux.tar.xz
+            ls
+            LD_LIBRARY_PATH=`pwd` LD_LIBRARY_PATH=`pwd` cargo test
 
