@@ -1,8 +1,7 @@
 
 ## Instalation
 ### Linux
-#### OS Prerequisities
-##### Fedora
+##### Fedora 
 dnf install speech-dispatcher-devel    SDL2-devel
 ##### Ubuntu
 apt-get install -y speech-dispatcher libspeechd-dev libsdl2-dev libbpango1.0-dev libpangox-1.0-dev
