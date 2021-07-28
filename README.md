@@ -2,7 +2,7 @@
 ## Instalation
 ### Linux
 ##### Fedora 33
-dnf install speech-dispatcher-devel SDL2-devel clang-devel pango-devel
+dnf install speech-dispatcher-devel SDL2-devel clang-devel pango-devel libXinerama-devel
 ##### Ubuntu 18.04
 apt-get install -y speech-dispatcher libspeechd-dev libsdl2-dev libbpango1.0-dev libpangox-1.0-dev
 #### Building
