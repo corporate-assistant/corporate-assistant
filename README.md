@@ -1,9 +1,9 @@
 
 ## Instalation
 ### Linux
-##### Fedora 
-dnf install speech-dispatcher-devel    SDL2-devel
-##### Ubuntu
+##### Fedora 33
+dnf install speech-dispatcher-devel SDL2-devel clang-devel
+##### Ubuntu 18.04
 apt-get install -y speech-dispatcher libspeechd-dev libsdl2-dev libbpango1.0-dev libpangox-1.0-dev
 #### Building
 1. Download native client of deepspeech : https://github.com/mozilla/DeepSpeech/releases
