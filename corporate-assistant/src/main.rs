@@ -16,6 +16,7 @@ use tts::*;
 pub use record::recorder::Recorder;
 mod labeling_assistant;
 mod msr; // Need this to know there is separate module in this project // Need this to know there is separate module in this project
+mod ca;
 
 // The model has been trained on this specific
 // sample rate.
@@ -114,6 +115,24 @@ fn main() {
                 "create weekly status report".to_string(),
             ],
             Rc::new(msr::actions::MSR::new(1)),
+        )
+        .expect("Registration failed");
+    intents
+        .register_action(
+            vec![
+                "create custom action".to_string(),
+                "compose custom action".to_string(),
+            ],
+            Rc::new(ca::actions::CreateCustomAction::new()),
+        )
+        .expect("Registration failed");
+    intents
+        .register_action(
+            vec![
+                "execute custom action".to_string(),
+                "run custom action".to_string(),
+            ],
+            Rc::new(ca::actions::ExecuteCustomAction::new()),
         )
         .expect("Registration failed");
 
