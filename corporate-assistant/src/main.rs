@@ -14,9 +14,9 @@ use deepspeech::Model;
 use tts::*;
 
 pub use record::recorder::Recorder;
+mod ca;
 mod labeling_assistant;
 mod msr; // Need this to know there is separate module in this project // Need this to know there is separate module in this project
-mod ca;
 
 // The model has been trained on this specific
 // sample rate.
