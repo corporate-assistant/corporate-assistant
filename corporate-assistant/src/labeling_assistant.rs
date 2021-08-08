@@ -78,7 +78,7 @@ pub mod labeling_assistant {
                     } else if msg == "_discard" {
                         return None;
                     } else {
-                        return Some(String::from(msg));
+                        te.buffer().unwrap().set_text(msg);
                     }
                 }
                 _ => (),
