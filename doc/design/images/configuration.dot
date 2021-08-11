@@ -1,0 +1,12 @@
+digraph G {
+
+  node[shape=rectangle]
+  Ex[label="Does configuration exists?"]
+  R[label="load configuration files"]
+  C[label="create configuration files\n with default values"]
+  
+  Ex->R[label="Yes", weight=100]
+  Ex->C[label="No"]
+  C->R
+  
+}
