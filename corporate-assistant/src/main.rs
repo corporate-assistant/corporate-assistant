@@ -4,11 +4,11 @@ extern crate deepspeech;
 
 use clap::{App, Arg};
 
+use deepspeech::Model;
 use std::fs::create_dir_all;
 use std::path::Path;
 use std::rc::Rc;
 use std::{thread, time};
-use deepspeech::Model;
 use tts::*;
 
 pub use record::recorder::Recorder;
