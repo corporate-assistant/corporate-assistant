@@ -8,37 +8,14 @@ use std::fs::create_dir_all;
 use std::path::Path;
 use std::rc::Rc;
 use std::{thread, time};
-
-use audrey::read::Reader;
 use deepspeech::Model;
 use tts::*;
 
 pub use record::recorder::Recorder;
 mod ca;
+mod config;
 mod labeling_assistant;
 mod msr; // Need this to know there is separate module in this project // Need this to know there is separate module in this project
-
-// The model has been trained on this specific
-// sample rate.
-const SAMPLE_RATE: u32 = 16_000;
-
-fn read_audio_buffer<T>(reader: &mut Reader<T>) -> Result<Vec<i16>, String>
-where
-    T: std::io::Read + std::io::Seek,
-{
-    let desc = reader.description();
-
-    if desc.channel_count() != 1 {
-        Err(String::from(
-            "The channel count is required to be one, at least for now",
-        ))
-    } else if desc.sample_rate() != SAMPLE_RATE {
-        let msg: String = "Incorrect sample rate. ".to_owned() + &SAMPLE_RATE.to_string();
-        Err(msg)
-    } else {
-        Ok(reader.samples().map(|s| s.unwrap()).collect())
-    }
-}
 
 fn main() {
     let matches = App::new("Corporate Assistant")

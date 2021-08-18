@@ -1,6 +1,8 @@
 pub mod actions {
     use corporate_assistant::interpreter::CorporateAction;
     pub use custom_action::{action_creator, action_executor};
+    //use config::configuration;
+    use crate::config::configuration;
 
     pub struct CreateCustomAction {}
 
@@ -9,13 +11,7 @@ pub mod actions {
             tts.speak("Please edit custom action script", true)
                 .expect("Problem with utterance");
             // Get user script name and pass it to be executed
-            let mut script_name = std::env::current_exe().unwrap();
-            script_name.pop();
-            script_name.pop();
-            script_name.pop();
-            script_name.push("custom_action");
-            script_name.push("scripts");
-            script_name.push("custom_script.sh");
+            let script_name = configuration::CAConfig::new().get_custom_action_script();
             action_creator(script_name);
         }
     }
@@ -35,13 +31,7 @@ pub mod actions {
             tts.speak("Executing custom action", true)
                 .expect("Problem with utterance");
             // Get user script name and pass it to be executed
-            let mut script_name = std::env::current_exe().unwrap();
-            script_name.pop();
-            script_name.pop();
-            script_name.pop();
-            script_name.push("custom_action");
-            script_name.push("scripts");
-            script_name.push("custom_script.sh");
+            let script_name = configuration::CAConfig::new().get_custom_action_script();
             action_executor(script_name);
         }
     }
