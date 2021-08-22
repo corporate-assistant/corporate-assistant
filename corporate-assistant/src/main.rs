@@ -151,6 +151,21 @@ fn main() {
             )),
         )
         .expect("Registration failed");
+    intents
+        .register_action(
+            vec![
+                "i want to recognize".to_string(),
+                "i want to recognize my colleague".to_string(),
+                "i want to recognize someone".to_string(),
+                "i want to give recognition".to_string(),
+                "give recognition".to_string(),
+            ],
+            Rc::new(webbrowser::actions::OpenWebsites::new(
+                vec!["https://recognition.intel.com"],
+                "Opening the recognition system".to_string(),
+            )),
+        )
+        .expect("Registration failed");
 
     // Get requested action
     let action = intents.get_action(&result);
