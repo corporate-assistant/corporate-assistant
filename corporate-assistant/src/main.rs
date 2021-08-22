@@ -16,6 +16,7 @@ mod ca;
 mod config;
 mod labeling_assistant;
 mod msr; // Need this to know there is separate module in this project // Need this to know there is separate module in this project
+mod webbrowser;
 
 fn main() {
     let matches = App::new("Corporate Assistant")
@@ -110,6 +111,59 @@ fn main() {
                 "run custom action".to_string(),
             ],
             Rc::new(ca::actions::ExecuteCustomAction::new()),
+        )
+        .expect("Registration failed");
+    intents
+        .register_action(
+            vec![
+                "open lunch menu".to_string(),
+                "open lunch menus".to_string(),
+                "open the lunch menu".to_string(),
+                "open the lunch menus".to_string(),
+                "what should I eat".to_string(),
+                "what should I have for lunch".to_string(),
+            ],
+            Rc::new(webbrowser::actions::OpenWebsites::new(
+                vec![
+                    "https://www.restauracja-bistro9.pl/#dania-dnia",
+                    "https://www.pizzamagnifico.pl/?p=30",
+                    "https://enjoyyourmeal.pl/menu/restaurant/id/36",
+                ],
+                "Opening lunch menus".to_string(),
+            )),
+        )
+        .expect("Registration failed");
+    intents
+        .register_action(
+            vec![
+                "i want holidays".to_string(),
+                "i want my holidays".to_string(),
+                "i want vacations".to_string(),
+                "i want to book holidays".to_string(),
+                "i want to book vacations".to_string(),
+                "i want to request holidays".to_string(),
+                "i want to request vacations".to_string(),
+                "give me holidays".to_string(),
+            ],
+            Rc::new(webbrowser::actions::OpenWebsites::new(
+                vec!["https://www.myworkday.com/intel/d/task/2997$275.htmld"],
+                "Opening the holdiday request form".to_string(),
+            )),
+        )
+        .expect("Registration failed");
+    intents
+        .register_action(
+            vec![
+                "i want to recognize".to_string(),
+                "i want to recognize my colleague".to_string(),
+                "i want to recognize someone".to_string(),
+                "i want to give recognition".to_string(),
+                "give recognition".to_string(),
+            ],
+            Rc::new(webbrowser::actions::OpenWebsites::new(
+                vec!["https://recognition.intel.com"],
+                "Opening the recognition system".to_string(),
+            )),
         )
         .expect("Registration failed");
 
