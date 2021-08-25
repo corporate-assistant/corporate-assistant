@@ -51,7 +51,7 @@ fn parse_cmdline() -> Conf {
     Conf {
         from_date: from_date.expect("No starting date"),
         to_date: to_date.expect("No ending date"),
-        config_file: config_file.expect("No configuration file"),
+        config_file: std::path::PathBuf::from(config_file.expect("No configuration file")),
         behind_proxy: behind_proxy,
     }
 }

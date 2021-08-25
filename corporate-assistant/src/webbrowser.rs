@@ -2,7 +2,7 @@ pub mod actions {
     use corporate_assistant::interpreter::CorporateAction;
     use webbrowser;
 
-    impl<'a> CorporateAction for OpenWebsites<'a> {
+    impl CorporateAction for OpenWebsites {
         fn Run(&self, tts: &mut tts::TTS) -> () {
             tts.speak(self.feedback.clone(), true)
                 .expect("Problem with utterance");
@@ -13,13 +13,13 @@ pub mod actions {
         }
     }
 
-    pub struct OpenWebsites<'a> {
-        urls: Vec<&'a str>,
+    pub struct OpenWebsites {
+        urls: Vec<String>,
         feedback: String,
     }
 
-    impl<'a> OpenWebsites<'a> {
-        pub fn new(urls: Vec<&'a str>, feedback: String) -> Self {
+    impl OpenWebsites {
+        pub fn new(urls: Vec<String>, feedback: String) -> Self {
             OpenWebsites {
                 urls: urls,
                 feedback: feedback,

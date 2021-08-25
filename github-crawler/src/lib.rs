@@ -2,6 +2,7 @@ use chrono;
 use graphql_client::*;
 use std::collections::HashMap;
 use std::env;
+use std::path::PathBuf;
 use std::str::FromStr;
 
 pub mod config_parser;
@@ -201,7 +202,7 @@ pub struct Conf {
     pub from_date: chrono::DateTime<chrono::Utc>,
     pub to_date: chrono::DateTime<chrono::Utc>,
     pub behind_proxy: bool,
-    pub config_file: String,
+    pub config_file: PathBuf,
 }
 
 pub fn get_contributions(conf: Conf, config: config_parser::GithubConfig) -> RepoContribs {
@@ -223,9 +224,9 @@ pub fn get_contributions(conf: Conf, config: config_parser::GithubConfig) -> Rep
         .bearer_auth(&github_api_token)
         .json(&q)
         .send()
-        .expect("Sener error");
+        .expect("Sender error");
 
-    let response_body: Response<user_pr_view::ResponseData> = res.json().expect("Reposne error");
+    let response_body: Response<user_pr_view::ResponseData> = res.json().expect("Response error");
 
     let (mut end_cursor, mut contribs) = get_repo_contribs(
         &response_body.data.expect("missing response data"),
@@ -248,7 +249,7 @@ pub fn get_contributions(conf: Conf, config: config_parser::GithubConfig) -> Rep
             .expect("Yet another sending error");
 
         let response_body: Response<user_pr_view_next::ResponseData> =
-            res.json().expect("Yet another resposne error");
+            res.json().expect("Yet another response error");
         let (after_cursor, next_contribs) = get_repo_contribs_next(
             &response_body.data.expect("missing response data"),
             &config.repos,

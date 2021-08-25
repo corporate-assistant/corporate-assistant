@@ -1,4 +1,5 @@
 pub mod actions {
+    use crate::config::configuration;
     use corporate_assistant::interpreter::CorporateAction;
     pub use github_crawler::{get_contributions, parse_config, Conf, Contrib, RepoContribs};
 
@@ -16,10 +17,7 @@ pub mod actions {
             let conf = Conf {
                 from_date: chrono::Utc::now() - chrono::Duration::weeks(self.time_frame as i64),
                 to_date: chrono::Utc::now(),
-                //TODO: Make it read from HOME
-                config_file: String::from(
-                    "/home/jczaja/corporate-assistant/corporate-assistant/config.toml",
-                ),
+                config_file: configuration::CAConfig::new().get_repos_config(),
                 behind_proxy: true,
             };
 

@@ -4,6 +4,7 @@ extern crate deepspeech;
 
 use clap::{App, Arg};
 
+use crate::config::configuration;
 use deepspeech::Model;
 use std::fs::create_dir_all;
 use std::path::Path;
@@ -71,6 +72,10 @@ fn main() {
     eprintln!("Transcription:");
     println!("{}", result);
 
+    let organization_config_file =
+        configuration::CAConfig::new().get_organization_config("itp.toml");
+    let org_info = configuration::parse_organization_config(&organization_config_file);
+
     // Registration of actions
     let mut intents = corporate_assistant::interpreter::Intents::new();
     intents
@@ -113,59 +118,71 @@ fn main() {
             Rc::new(ca::actions::ExecuteCustomAction::new()),
         )
         .expect("Registration failed");
-    intents
-        .register_action(
-            vec![
-                "open lunch menu".to_string(),
-                "open lunch menus".to_string(),
-                "open the lunch menu".to_string(),
-                "open the lunch menus".to_string(),
-                "what should I eat".to_string(),
-                "what should I have for lunch".to_string(),
-            ],
-            Rc::new(webbrowser::actions::OpenWebsites::new(
-                vec![
-                    "https://www.restauracja-bistro9.pl/#dania-dnia",
-                    "https://www.pizzamagnifico.pl/?p=30",
-                    "https://enjoyyourmeal.pl/menu/restaurant/id/36",
-                ],
-                "Opening lunch menus".to_string(),
-            )),
-        )
-        .expect("Registration failed");
-    intents
-        .register_action(
-            vec![
-                "i want holidays".to_string(),
-                "i want my holidays".to_string(),
-                "i want vacations".to_string(),
-                "i want to book holidays".to_string(),
-                "i want to book vacations".to_string(),
-                "i want to request holidays".to_string(),
-                "i want to request vacations".to_string(),
-                "give me holidays".to_string(),
-            ],
-            Rc::new(webbrowser::actions::OpenWebsites::new(
-                vec!["https://www.myworkday.com/intel/d/task/2997$275.htmld"],
-                "Opening the holdiday request form".to_string(),
-            )),
-        )
-        .expect("Registration failed");
-    intents
-        .register_action(
-            vec![
-                "i want to recognize".to_string(),
-                "i want to recognize my colleague".to_string(),
-                "i want to recognize someone".to_string(),
-                "i want to give recognition".to_string(),
-                "give recognition".to_string(),
-            ],
-            Rc::new(webbrowser::actions::OpenWebsites::new(
-                vec!["https://recognition.intel.com"],
-                "Opening the recognition system".to_string(),
-            )),
-        )
-        .expect("Registration failed");
+
+    match org_info.restaurants {
+        Some(i) => {
+            intents
+                .register_action(
+                    vec![
+                        "open lunch menu".to_string(),
+                        "open lunch menus".to_string(),
+                        "open the lunch menu".to_string(),
+                        "open the lunch menus".to_string(),
+                        "what should I eat".to_string(),
+                        "what should I have for lunch".to_string(),
+                    ],
+                    Rc::new(webbrowser::actions::OpenWebsites::new(
+                        i,
+                        "Opening lunch menus".to_string(),
+                    )),
+                )
+                .expect("Registration failed");
+        }
+        None => (),
+    }
+    match org_info.holidays {
+        Some(i) => {
+            intents
+                .register_action(
+                    vec![
+                        "i want holidays".to_string(),
+                        "i want my holidays".to_string(),
+                        "i want vacations".to_string(),
+                        "i want to book holidays".to_string(),
+                        "i want to book vacations".to_string(),
+                        "i want to request holidays".to_string(),
+                        "i want to request vacations".to_string(),
+                        "give me holidays".to_string(),
+                    ],
+                    Rc::new(webbrowser::actions::OpenWebsites::new(
+                        i,
+                        "Opening the holdiday request form".to_string(),
+                    )),
+                )
+                .expect("Registration failed");
+        }
+        None => (),
+    }
+    match org_info.recognition {
+        Some(i) => {
+            intents
+                .register_action(
+                    vec![
+                        "i want to recognize".to_string(),
+                        "i want to recognize my colleague".to_string(),
+                        "i want to recognize someone".to_string(),
+                        "i want to give recognition".to_string(),
+                        "give recognition".to_string(),
+                    ],
+                    Rc::new(webbrowser::actions::OpenWebsites::new(
+                        i,
+                        "Opening the recognition system".to_string(),
+                    )),
+                )
+                .expect("Registration failed");
+        }
+        None => (),
+    }
 
     // Get requested action
     let action = intents.get_action(&result);
