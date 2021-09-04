@@ -13,6 +13,7 @@ clap = "~2.27.0"
 record = { path = "../record" }
 github-crawler = { path = "../github-crawler" }
 custom_action = { path = "../custom_action" }
+mailer = { path = "../mailer" }
 tts = "0.15.2"
 chrono = "0.4"
 serde = "^1.0"
@@ -20,3 +21,5 @@ toml = "0.5.7"
 fltk = { version = "^1", features = ["fltk-bundled"] }
 dirs = "3.0.2"
 webbrowser = "0.5.5"
+toml = "0.5.7"
+serde = "^1.0"
