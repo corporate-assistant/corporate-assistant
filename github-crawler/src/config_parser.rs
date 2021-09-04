@@ -1,5 +1,6 @@
 use serde::Deserialize;
 use std::io::prelude::*;
+use std::path::PathBuf;
 use toml;
 
 #[derive(Deserialize, Debug)]
@@ -15,8 +16,7 @@ struct RepoConfig {
     github: Option<GithubConfig>,
 }
 
-pub fn parse_config(config_file: String) -> GithubConfig {
-    let path = std::path::PathBuf::from(config_file);
+pub fn parse_config(path: PathBuf) -> GithubConfig {
     let file = std::fs::File::open(path);
     let mut reader = std::io::BufReader::new(file.expect("Cannot open file"));
 
