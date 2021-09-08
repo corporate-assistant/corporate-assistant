@@ -3,7 +3,7 @@ pub mod actions {
     use webbrowser;
 
     impl CorporateAction for OpenWebsites {
-        fn Run(&self, tts: &mut tts::TTS) -> () {
+        fn run(&self, tts: &mut tts::TTS) -> () {
             tts.speak(self.feedback.clone(), true)
                 .expect("Problem with utterance");
             self.urls.iter().for_each(|x| {

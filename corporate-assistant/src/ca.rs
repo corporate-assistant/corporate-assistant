@@ -7,7 +7,7 @@ pub mod actions {
     pub struct CreateCustomAction {}
 
     impl CorporateAction for CreateCustomAction {
-        fn Run(&self, tts: &mut tts::TTS) -> () {
+        fn run(&self, tts: &mut tts::TTS) -> () {
             tts.speak("Please edit custom action script", true)
                 .expect("Problem with utterance");
             // Get user script name and pass it to be executed
@@ -27,7 +27,7 @@ pub mod actions {
     pub struct ExecuteCustomAction {}
 
     impl CorporateAction for ExecuteCustomAction {
-        fn Run(&self, tts: &mut tts::TTS) -> () {
+        fn run(&self, tts: &mut tts::TTS) -> () {
             tts.speak("Executing custom action", true)
                 .expect("Problem with utterance");
             // Get user script name and pass it to be executed

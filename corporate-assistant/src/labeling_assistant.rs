@@ -24,7 +24,7 @@ pub mod labeling_assistant {
         let vpack = fltk::group::Pack::default()
             .with_size(600, 600)
             .center_of(&wind);
-        let frame = Frame::default()
+        let _frame = Frame::default()
             .with_size(0, 50)
             .with_label("Existing labels:");
         // Iterate over existing labels and make
@@ -48,11 +48,11 @@ pub mod labeling_assistant {
         te.set_buffer(Some(tb));
         te.set_insert_mode(true);
         let mut custom_label = Button::default().with_size(50, 0).with_label("Ok");
-        let placeholder = Frame::default().with_size(80, 0);
+        let _placeholder = Frame::default().with_size(80, 0);
         let mut player = Button::default().with_size(50, 0).with_label("Play");
         let mut discard = Button::default().with_size(70, 0).with_label("Discard");
         hpack.end();
-        let frame = Frame::default()
+        let _frame = Frame::default()
             .with_size(600, 50)
             .with_label("Custom label:")
             .above_of(&hpack, 0);

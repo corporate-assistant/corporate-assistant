@@ -4,7 +4,7 @@ pub mod interpreter {
     use std::rc::Rc;
 
     pub trait CorporateAction {
-        fn Run(&self, tts: &mut tts::TTS) -> ();
+        fn run(&self, tts: &mut tts::TTS) -> ();
     }
 
     pub struct Intents {

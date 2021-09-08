@@ -1,11 +1,8 @@
 use chrono;
 use prettytable::*;
 use std::env;
-use std::str::FromStr;
 
 pub use github_crawler::{get_contributions, parse_config, Conf, Contrib, RepoContribs};
-
-type DateTime = String;
 
 fn parse_date(s: &str) -> Option<chrono::DateTime<chrono::Utc>> {
     let values: Vec<_> = s.split(".").collect();

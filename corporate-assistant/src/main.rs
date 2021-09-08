@@ -190,7 +190,7 @@ fn main() {
     // Let's match e.g. If phrase not recognized then execute dumping
     // if proper Action object returned then execute it
     match action {
-        Ok(action) => action.Run(&mut tts),
+        Ok(action) => action.run(&mut tts),
         Err(action) => {
             println!("No action found for : {}", action);
             // Announce that request is unknown

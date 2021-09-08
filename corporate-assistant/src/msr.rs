@@ -8,7 +8,7 @@ pub mod actions {
     use toml;
 
     impl CorporateAction for MSR {
-        fn Run(&self, tts: &mut tts::TTS) -> () {
+        fn run(&self, tts: &mut tts::TTS) -> () {
             let time_frame = match self.time_frame {
                 1 => "weekly",
                 4 => "monthly",
