@@ -11,12 +11,20 @@ pub struct GithubConfig {
     pub url: String,
 }
 
+#[derive(Deserialize, Debug)]
+pub struct JIRAConfig {
+    pub user: String,
+    pub project: String,
+    pub url: String,
+}
+
 #[derive(Deserialize)]
 struct RepoConfig {
     github: Option<GithubConfig>,
+    jira: Option<JIRAConfig>,
 }
 
-pub fn parse_config(path: PathBuf) -> GithubConfig {
+pub fn parse_config(path: PathBuf) -> (Option<GithubConfig>, Option<JIRAConfig>) {
     let file = std::fs::File::open(path);
     let mut reader = std::io::BufReader::new(file.expect("Cannot open file"));
 
@@ -26,7 +34,5 @@ pub fn parse_config(path: PathBuf) -> GithubConfig {
 
     let repo_config: RepoConfig = toml::from_str(&c).unwrap();
 
-    let github_config = repo_config.github.unwrap();
-
-    github_config
+    (repo_config.github,repo_config.jira)
 }

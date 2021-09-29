@@ -71,6 +71,7 @@ function create_jira_issue {
   board_url=`echo $result | sed 's:.*self"\:"::' | cut -f 1 -d '"'`
   ### 1.2.2 Get active sprint
   result=`curl -u jczaja:$pass -H Content-Type: application/json -X GET $board_url/sprint?state=active`
+  echo "Sprint response: $result"
   sprint_url=`echo $result | sed 's:.*self"\:"::' | cut -f 1 -d '"'`
   sprint_name=`echo $result | sed 's:.*name"\:"::' | cut -f 1 -d '"'`
 
@@ -109,10 +110,12 @@ function create_jira_issue {
     issue_name=`echo $feedback | cut -f 2 -d ' '`
     echo "issuename:$issue_name"
     result=`curl -u jczaja:$pass -H "Content-Type: application/json" -X POST -d "{ \"issues\": [ \"$issue_name ] }" $sprint_url/issue`
+    echo "Sprint url: $sprint_url/issues"
     # If empty result then ok
     # TODO: check if variable empty then ok  and print / say message on adding to sprint
     #       if variale is having content then report an error
     feedback="Issue $issue_name successfuly added to Sprint $sprint_name in JIRA"
+    echo "Feedback of sprint adding: $feedback"
     zenity --notification --text="$feedback"
     espeak-ng "$feedback" -g 5
   else 

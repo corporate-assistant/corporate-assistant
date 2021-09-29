@@ -6,6 +6,7 @@ use clap::{App, Arg};
 
 use crate::config::configuration;
 use deepspeech::Model;
+use github_crawler::parse_config;
 use std::fs::create_dir_all;
 use std::path::Path;
 use std::rc::Rc;
@@ -15,6 +16,7 @@ use tts::*;
 pub use record::recorder::Recorder;
 mod ca;
 mod config;
+mod jira;
 mod labeling_assistant;
 mod msr; // Need this to know there is separate module in this project // Need this to know there is separate module in this project
 mod webbrowser;
@@ -72,12 +74,34 @@ fn main() {
     eprintln!("Transcription:");
     println!("{}", result);
 
+    // Origanization/site info
     let organization_config_file =
         configuration::CAConfig::new().get_organization_config("itp.toml");
     let org_info = configuration::parse_organization_config(&organization_config_file);
+    // Project info
+    let config_file = configuration::CAConfig::new().get_repos_config();
+    let (_, jira_config) = parse_config(config_file);
 
     // Registration of actions
     let mut intents = corporate_assistant::interpreter::Intents::new();
+
+    match jira_config {
+        Some(jira) => {
+            intents
+                .register_action(
+                    vec!["file an issue".to_string()],
+                    Rc::new(jira::jira::JIRA::new(
+                        jira.user,
+                        jira.url,
+                        org_info.proxy,
+                        jira.project,
+                    )),
+                )
+                .expect("Registration failed");
+        }
+        None => (),
+    }
+
     intents
         .register_action(
             vec![

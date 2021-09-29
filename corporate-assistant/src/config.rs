@@ -17,6 +17,8 @@ pub mod configuration {
         pub restaurants: Option<Vec<String>>,
         pub recognition: Option<Vec<String>>,
         pub holidays: Option<Vec<String>>,
+        pub proxy: Option<Vec<String>>,
+        pub jira: Option<Vec<String>>,
     }
 
     impl CAConfig {
@@ -78,7 +80,7 @@ pub mod configuration {
         // TODO(jczaja) Make next two methods unified into one
         pub fn get_repos_config(&self) -> PathBuf {
             let mut config_name = PathBuf::from(&self.config_dir);
-            config_name.push("config.toml");
+            config_name.push("paddle.toml"); //TODO: make it given from commandline
             let config_name = Path::new(&config_name);
             if config_name.exists() == false {
                 let default_content = " 
@@ -87,6 +89,11 @@ pub mod configuration {
                 token = \"<your github token>\"
                 repos = [\"Paddle\"]
                 url = \"https://api.github.com/graphql\"
+
+                [jira]
+                user = \"<username to JIRA>\"
+                project = \"PADDLEQ\"
+                url = [\"<URL of JIRA server>\"]
                 ";
                 let mut file = File::create(config_name).expect(&format!(
                     "Unable to create default repos config: {}",
@@ -109,6 +116,7 @@ pub mod configuration {
                 restaurants = [\"<URL of first nearby resturant>\", \"<URL of second nearby resturant>\", \"<yet another URL of some reachable canteen>\"]
                 recognition = [\"<URL to website with recognition>\"]
                 holidays = [\"<URL to website with holidays request form>\"]
+                proxy = [\"<URL of proxy servers>\"]
                 ";
                 let mut file = File::create(config_name).expect(&format!(
                     "Unable to create default repos config: {}",

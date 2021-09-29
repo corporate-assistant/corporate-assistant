@@ -94,9 +94,9 @@ fn print_text(repo_contribs: &RepoContribs) -> () {
 fn main() -> Result<(), anyhow::Error> {
     let conf = parse_cmdline();
     let config_file = conf.config_file.clone();
-    let config = parse_config(config_file);
+    let (github_config, _) = parse_config(config_file);
 
-    let contribs = get_contributions(conf, config);
+    let contribs = get_contributions(conf, github_config.unwrap());
 
     print_table(&contribs);
     print_text(&contribs);
