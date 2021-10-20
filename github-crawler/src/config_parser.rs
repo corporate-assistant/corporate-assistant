@@ -34,5 +34,5 @@ pub fn parse_config(path: PathBuf) -> (Option<GithubConfig>, Option<JIRAConfig>)
 
     let repo_config: RepoConfig = toml::from_str(&c).unwrap();
 
-    (repo_config.github,repo_config.jira)
+    (repo_config.github, repo_config.jira)
 }

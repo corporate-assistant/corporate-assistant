@@ -26,7 +26,7 @@ pub mod actions {
             };
 
             let config_file = conf.config_file.clone();
-            let (config,_) = parse_config(config_file);
+            let (config, _) = parse_config(config_file);
             let contribs = get_contributions(conf, config.unwrap());
             //            MSR::print_text(&contribs);
             MSR::send_msr_email(&contribs);
