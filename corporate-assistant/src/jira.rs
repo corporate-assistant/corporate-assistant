@@ -340,8 +340,8 @@ pub mod jira {
     mod tests {
         use super::*;
         use crate::config::configuration;
-        use tts::*;
         use github_crawler::parse_config;
+        use tts::*;
 
         #[test]
         #[ignore]
