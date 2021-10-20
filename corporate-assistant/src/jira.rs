@@ -1,16 +1,12 @@
 pub mod jira {
-    use crate::config::configuration;
     use corporate_assistant::interpreter::CorporateAction;
     use fltk::{
-        app, button::Button, frame::Frame, group::*, input::SecretInput, prelude::*,
-        text::TextBuffer, text::TextEditor, window::Window,
+        app, button::Button, frame::Frame, input::SecretInput, prelude::*, text::TextBuffer,
+        text::TextEditor, window::Window,
     };
     use futures::executor::block_on;
-    use github_crawler::parse_config;
     use serde::{Deserialize, Serialize};
     use std::collections::HashMap;
-    use std::io::prelude::*;
-    use toml;
 
     impl CorporateAction for JIRA {
         fn run(&self, tts: &mut tts::TTS) -> () {
@@ -116,14 +112,14 @@ pub mod jira {
         ) -> Self {
             JIRA {
                 user: user,
-                jira_url: jira_url, // https://jira.devtools.intel.com/
+                jira_url: jira_url,
                 proxy: proxy,
-                project: project, //PADDLEQ
+                project: project,
             }
         }
 
+        // Get password, issue title and desc from user
         fn get_jira_input(&self) -> Option<(String, String, String)> {
-            // Get password from user
             let app = app::App::default();
             let mut wind = Window::default()
                 .with_size(480, 640)
@@ -345,6 +341,7 @@ pub mod jira {
         use super::*;
         use crate::config::configuration;
         use tts::*;
+        use github_crawler::parse_config;
 
         #[test]
         #[ignore]
