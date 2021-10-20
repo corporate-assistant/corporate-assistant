@@ -25,7 +25,9 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - name: Install system dependencies
-          run:  sudo apt-get install -y speech-dispatcher libspeechd-dev libsdl2-dev libpango1.0-dev libpangox-1.0-dev
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y speech-dispatcher libspeechd-dev libsdl2-dev libpango1.0-dev libpangox-1.0-dev
         - uses: actions/checkout@v2
         - uses: actions-rs/toolchain@v1
           with:
