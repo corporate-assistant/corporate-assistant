@@ -45,16 +45,22 @@ pub mod jira {
         self_: String,
         state: String,
         name: String,
-        startDate: String,
-        endDate: String,
-        originBoardId: u32,
+        #[serde(rename = "startDate")]
+        start_date: String,
+        #[serde(rename = "endDate")]
+        end_date: String,
+        #[serde(rename = "originBoardId")]
+        origin_board_id: u32,
     }
 
     #[derive(Debug, Deserialize, Serialize)]
     struct JIRAResponse<T> {
-        maxResults: u32,
-        startAt: u32,
-        isLast: bool,
+        #[serde(rename = "maxResults")]
+        max_results: u32,
+        #[serde(rename = "startAt")]
+        start_at: u32,
+        #[serde(rename = "isLast")]
+        is_last: bool,
         values: Vec<T>,
     }
 
@@ -93,10 +99,6 @@ pub mod jira {
         name: String,
         url: String,
     }
-    struct Board<'a> {
-        name: &'a str,
-        url: &'a str,
-    }
 
     pub struct JIRA {
         user: String,
@@ -127,7 +129,7 @@ pub mod jira {
                 .with_size(480, 640)
                 .center_screen()
                 .with_label("JIRA helper");
-            let mut vpack = fltk::group::Pack::default()
+            let vpack = fltk::group::Pack::default()
                 .with_size(400, 600)
                 .center_of(&wind);
             let _frame = Frame::default().with_size(0, 50).with_label("Issue Title:");
