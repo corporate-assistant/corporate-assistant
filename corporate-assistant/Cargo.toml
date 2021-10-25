@@ -16,7 +16,7 @@ custom_action = { path = "../custom_action" }
 mailer = { path = "../mailer" }
 tts = "0.15.2"
 chrono = "0.4"
-fltk = { version = "^1", features = ["fltk-bundled"] }
+fltk = { version = "1.2.3", features = ["fltk-bundled"] }
 dirs = "3.0.2"
 webbrowser = "0.5.5"
 toml = "0.5.7"

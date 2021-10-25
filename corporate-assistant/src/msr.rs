@@ -112,7 +112,11 @@ pub mod actions {
         fn send_msr_email(repo_contribs: &RepoContribs) -> () {
             use chrono::Datelike;
 
+            //
             let email_config = Self::parse_config_file("C:\\Users\\tpatejko\\projects\\corporate-assistant\\corporate-assistant\\corporate-assistant\\email_client.toml".to_string());
+
+            let ca_config = CAConfig::new();
+            let email_config = Self::parse_config_file(ca_config.get_mailer_config());
 
             let month = chrono::Utc::now().date().month();
             let year = chrono::Utc::now().date().year();
