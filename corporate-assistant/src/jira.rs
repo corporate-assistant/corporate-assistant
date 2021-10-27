@@ -1,8 +1,8 @@
 pub mod jira {
     use corporate_assistant::interpreter::CorporateAction;
     use fltk::{
-        app, button::Button, frame::Frame, input::SecretInput, prelude::*, text::TextBuffer,
-        text::TextEditor, window::Window, menu::Choice,
+        app, button::Button, frame::Frame, input::SecretInput, menu::Choice, prelude::*,
+        text::TextBuffer, text::TextEditor, window::Window,
     };
     use futures::executor::block_on;
     use serde::{Deserialize, Serialize};
@@ -82,7 +82,7 @@ pub mod jira {
         summary: String,
         description: String,
         issuetype: HashMap<String, String>,
-        customfield_11900 : String, // TODO(jczaja): Make it generic based name
+        customfield_11900: String, // TODO(jczaja): Make it generic based name
     }
 
     impl JIRATaskWithinEpicProjectDesc {
@@ -96,7 +96,7 @@ pub mod jira {
                 summary: title.to_string(),
                 description: desc.to_string(),
                 issuetype: my_issuetype,
-                customfield_11900 : epic.to_string(),
+                customfield_11900: epic.to_string(),
             }
         }
     }
@@ -173,12 +173,12 @@ pub mod jira {
             let _frame = Frame::default()
                 .with_size(0, 50)
                 .with_label("Epics to link to:");
-            let epics = vec!["PADDLEQ-1575","PADDLEQ-1249","PADDLEQ-1259"]; // TODO(do something with it)
+            let epics = vec!["PADDLEQ-1575", "PADDLEQ-1249", "PADDLEQ-1259"]; // TODO(do something with it)
 
             let mut epics_list = Choice::new(0, 0, 0, 30, "");
             epics_list.add_choice(epics[0]); //fp32
             epics_list.add_choice(epics[1]); //bf16
-            epics_list.add_choice(epics[2]); //int8 
+            epics_list.add_choice(epics[2]); //int8
 
             // Issue description
             let _frame = Frame::default()
@@ -214,8 +214,11 @@ pub mod jira {
                                 de.buffer().unwrap().text(),
                                 match epics_list.value() {
                                     -1 => None,
-                                    _ => {println!("chosen IDX: {}", epics_list.value()); Some(epics[epics_list.value() as usize].to_string())},
-                                }
+                                    _ => {
+                                        println!("chosen IDX: {}", epics_list.value());
+                                        Some(epics[epics_list.value() as usize].to_string())
+                                    }
+                                },
                             ));
                         } else if msg == "exit" {
                             return None;
@@ -258,9 +261,18 @@ pub mod jira {
             // Get Epic Link custom field
             let epic_custom_link = self.get_epics_custom_link(&client, login, pass);
 
-                
             // Send an issue to JIRA
-            self.submit_issue(tts, &client, login, pass, epic_custom_link, curr_sprint, title, desc, epic);
+            self.submit_issue(
+                tts,
+                &client,
+                login,
+                pass,
+                epic_custom_link,
+                curr_sprint,
+                title,
+                desc,
+                epic,
+            );
         }
 
         fn get_epics_custom_link(
@@ -271,10 +283,7 @@ pub mod jira {
         ) -> Option<String> {
             // Get custom_field  id for "Epic Link"
             let body = client
-                .get(
-                    &(self.jira_url.clone()
-                        + "/rest/api/2/field"),
-                )
+                .get(&(self.jira_url.clone() + "/rest/api/2/field"))
                 .basic_auth(&login, Some(&pass)) // Get password
                 .send();
             let mut actual_body = body.expect("GET to get JIRA board failed");
@@ -283,14 +292,14 @@ pub mod jira {
                 panic!();
             }
 
-           // println!("Fields: {}", actual_body.text().unwrap());
+            // println!("Fields: {}", actual_body.text().unwrap());
             let custom_fields = actual_body
                 .json::<Vec<CustomFieldDesc>>()
                 .expect("Error converting response to JSON");
             //println!("fields = {:#?}", custom_fields);
-           
-            let mut epic_custom_link_iter = custom_fields.iter().filter(|x| {x.name == "Epic Link"});
-            
+
+            let mut epic_custom_link_iter = custom_fields.iter().filter(|x| x.name == "Epic Link");
+
             //println!("epic_custom_link = {:#?}", epic_custom_link_iter.next());
             let epic_custom_link = epic_custom_link_iter.next();
             match epic_custom_link {
@@ -357,7 +366,7 @@ pub mod jira {
             client: &reqwest::Client,
             login: &str,
             pass: &str,
-            epic_custom_link : Option<String>, // TODO: Use it somewhere
+            epic_custom_link: Option<String>, // TODO: Use it somewhere
             curr_sprint: Option<Sprint>,
             title: &str,
             desc: &str,
@@ -367,26 +376,27 @@ pub mod jira {
             let res = match epic {
                 None => {
                     let mut my_jira_task = HashMap::new();
-                    let issue_to_submit = JIRATaskProjectDesc::new(&self.project, title, desc); 
+                    let issue_to_submit = JIRATaskProjectDesc::new(&self.project, title, desc);
                     my_jira_task.insert("fields".to_string(), issue_to_submit);
                     let res = client
                         .post(&(self.jira_url.clone() + "/rest/api/2/issue/"))
                         .basic_auth(&login, Some(&pass))
                         .json(&my_jira_task)
                         .send();
-                        res
-                        },
+                    res
+                }
                 Some(epic_name) => {
                     let mut my_jira_task = HashMap::new();
-                    let issue_to_submit = JIRATaskWithinEpicProjectDesc::new(&self.project, title, desc, &epic_name);
+                    let issue_to_submit =
+                        JIRATaskWithinEpicProjectDesc::new(&self.project, title, desc, &epic_name);
                     my_jira_task.insert("fields".to_string(), issue_to_submit);
                     let res = client
                         .post(&(self.jira_url.clone() + "/rest/api/2/issue/"))
                         .basic_auth(&login, Some(&pass))
                         .json(&my_jira_task)
                         .send();
-                        res
-                    },
+                    res
+                }
             };
 
             let mut actual_response = res.expect("Error sending JIRA request");
