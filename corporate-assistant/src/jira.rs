@@ -1,8 +1,8 @@
 pub mod jira {
     use corporate_assistant::interpreter::CorporateAction;
     use fltk::{
-        app, button::Button, frame::Frame, input::SecretInput, prelude::*, text::TextBuffer,
-        text::TextEditor, window::Window,
+        app, button::Button, frame::Frame, input::SecretInput, menu::Choice, prelude::*,
+        text::TextBuffer, text::TextEditor, window::Window,
     };
     use futures::executor::block_on;
     use serde::{Deserialize, Serialize};
@@ -13,10 +13,10 @@ pub mod jira {
             let feedback = "Creating JIRA issue. Please type your password and edit JIRA issue ";
             tts.speak(feedback, true).expect("Problem with utterance");
 
-            if let Some((pass, title, desc)) = self.get_jira_input() {
+            if let Some((pass, title, desc, epic)) = self.get_jira_input() {
                 tts.speak("Input send to JIRA", true)
                     .expect("Problem with utterance");
-                block_on(self.submit(tts, &self.user, &pass, &title, &desc));
+                block_on(self.submit(tts, &self.user, &pass, &title, &desc, epic));
             } else {
                 tts.speak("Invalid password", true)
                     .expect("Invalid password");
@@ -32,6 +32,12 @@ pub mod jira {
         name: String,
         #[serde(rename = "type")]
         type_: String,
+    }
+
+    #[derive(Debug, Deserialize, Serialize)]
+    struct CustomFieldDesc {
+        id: String,
+        name: String,
     }
 
     #[derive(Debug, Deserialize, Serialize)]
@@ -68,6 +74,33 @@ pub mod jira {
         self_: String,
     }
 
+    // TODO: How to unify WithinEpic and without epic?
+
+    #[derive(Debug, Deserialize, Serialize)]
+    struct JIRATaskWithinEpicProjectDesc {
+        project: HashMap<String, String>,
+        summary: String,
+        description: String,
+        issuetype: HashMap<String, String>,
+        customfield_11900: String, // TODO(jczaja): Make it generic based name
+    }
+
+    impl JIRATaskWithinEpicProjectDesc {
+        fn new(project: &str, title: &str, desc: &str, epic: &str) -> Self {
+            let mut my_issuetype = HashMap::new();
+            my_issuetype.insert("name".to_string(), "Task".to_string());
+            let mut my_project = HashMap::new();
+            my_project.insert("key".to_string(), project.to_string());
+            JIRATaskWithinEpicProjectDesc {
+                project: my_project,
+                summary: title.to_string(),
+                description: desc.to_string(),
+                issuetype: my_issuetype,
+                customfield_11900: epic.to_string(),
+            }
+        }
+    }
+
     #[derive(Debug, Deserialize, Serialize)]
     struct JIRATaskProjectDesc {
         project: HashMap<String, String>,
@@ -77,11 +110,11 @@ pub mod jira {
     }
 
     impl JIRATaskProjectDesc {
-        fn new(title: &str, desc: &str) -> Self {
+        fn new(project: &str, title: &str, desc: &str) -> Self {
             let mut my_issuetype = HashMap::new();
             my_issuetype.insert("name".to_string(), "Task".to_string());
             let mut my_project = HashMap::new();
-            my_project.insert("key".to_string(), "PADDLEQ".to_string());
+            my_project.insert("key".to_string(), project.to_string());
             JIRATaskProjectDesc {
                 project: my_project,
                 summary: title.to_string(),
@@ -119,7 +152,7 @@ pub mod jira {
         }
 
         // Get password, issue title and desc from user
-        fn get_jira_input(&self) -> Option<(String, String, String)> {
+        fn get_jira_input(&self) -> Option<(String, String, String, Option<String>)> {
             let app = app::App::default();
             let mut wind = Window::default()
                 .with_size(480, 640)
@@ -136,6 +169,18 @@ pub mod jira {
             te.set_buffer(Some(tb));
             te.set_insert_mode(true);
 
+            // Make a dropdown list with epics to link to
+            let _frame = Frame::default()
+                .with_size(0, 50)
+                .with_label("Epics to link to:");
+            let epics = vec!["PADDLEQ-1575", "PADDLEQ-1249", "PADDLEQ-1259"]; // TODO(do something with it)
+
+            let mut epics_list = Choice::new(0, 0, 0, 30, "");
+            epics_list.add_choice(epics[0]); //fp32
+            epics_list.add_choice(epics[1]); //bf16
+            epics_list.add_choice(epics[2]); //int8
+
+            // Issue description
             let _frame = Frame::default()
                 .with_size(0, 50)
                 .with_label("Issue Description:");
@@ -145,7 +190,7 @@ pub mod jira {
             let mut de = TextEditor::default().with_size(0, 200);
             de.set_buffer(Some(db));
             de.set_insert_mode(true);
-
+            // JIRA passoword
             let _frame = Frame::default()
                 .with_size(0, 50)
                 .with_label("JIRA password:");
@@ -167,6 +212,13 @@ pub mod jira {
                                 si.value(),
                                 te.buffer().unwrap().text(),
                                 de.buffer().unwrap().text(),
+                                match epics_list.value() {
+                                    -1 => None,
+                                    _ => {
+                                        println!("chosen IDX: {}", epics_list.value());
+                                        Some(epics[epics_list.value() as usize].to_string())
+                                    }
+                                },
                             ));
                         } else if msg == "exit" {
                             return None;
@@ -187,6 +239,7 @@ pub mod jira {
             pass: &str,
             title: &str,
             desc: &str,
+            epic: Option<String>,
         ) {
             // If there is proxy then pick first URL
             let client = match &self.proxy {
@@ -205,10 +258,54 @@ pub mod jira {
             // Get Current Sprint if any
             let curr_sprint = self.fetch_sprint(&client, login, pass);
 
-            let jira_issue = JIRATaskProjectDesc::new(title, desc);
+            // Get Epic Link custom field
+            let epic_custom_link = self.get_epics_custom_link(&client, login, pass);
 
             // Send an issue to JIRA
-            self.submit_issue(tts, &client, jira_issue, login, pass, curr_sprint);
+            self.submit_issue(
+                tts,
+                &client,
+                login,
+                pass,
+                epic_custom_link,
+                curr_sprint,
+                title,
+                desc,
+                epic,
+            );
+        }
+
+        fn get_epics_custom_link(
+            &self,
+            client: &reqwest::Client,
+            login: &str,
+            pass: &str,
+        ) -> Option<String> {
+            // Get custom_field  id for "Epic Link"
+            let body = client
+                .get(&(self.jira_url.clone() + "/rest/api/2/field"))
+                .basic_auth(&login, Some(&pass)) // Get password
+                .send();
+            let mut actual_body = body.expect("GET to get JIRA board failed");
+            if actual_body.status().is_success() == false {
+                eprintln!("Error getting Response from JIRA");
+                panic!();
+            }
+
+            // println!("Fields: {}", actual_body.text().unwrap());
+            let custom_fields = actual_body
+                .json::<Vec<CustomFieldDesc>>()
+                .expect("Error converting response to JSON");
+            //println!("fields = {:#?}", custom_fields);
+
+            let mut epic_custom_link_iter = custom_fields.iter().filter(|x| x.name == "Epic Link");
+
+            //println!("epic_custom_link = {:#?}", epic_custom_link_iter.next());
+            let epic_custom_link = epic_custom_link_iter.next();
+            match epic_custom_link {
+                Some(i) => Some(i.id.clone()),
+                None => None,
+            }
         }
 
         fn fetch_sprint(
@@ -267,20 +364,41 @@ pub mod jira {
             &self,
             tts: &mut tts::TTS,
             client: &reqwest::Client,
-            issue_to_submit: JIRATaskProjectDesc,
             login: &str,
             pass: &str,
+            epic_custom_link: Option<String>, // TODO: Use it somewhere
             curr_sprint: Option<Sprint>,
+            title: &str,
+            desc: &str,
+            epic: Option<String>,
         ) {
             // Here is submitting task to JIRA
-            let mut my_jira_task = HashMap::new();
-            my_jira_task.insert("fields".to_string(), issue_to_submit);
+            let res = match epic {
+                None => {
+                    let mut my_jira_task = HashMap::new();
+                    let issue_to_submit = JIRATaskProjectDesc::new(&self.project, title, desc);
+                    my_jira_task.insert("fields".to_string(), issue_to_submit);
+                    let res = client
+                        .post(&(self.jira_url.clone() + "/rest/api/2/issue/"))
+                        .basic_auth(&login, Some(&pass))
+                        .json(&my_jira_task)
+                        .send();
+                    res
+                }
+                Some(epic_name) => {
+                    let mut my_jira_task = HashMap::new();
+                    let issue_to_submit =
+                        JIRATaskWithinEpicProjectDesc::new(&self.project, title, desc, &epic_name);
+                    my_jira_task.insert("fields".to_string(), issue_to_submit);
+                    let res = client
+                        .post(&(self.jira_url.clone() + "/rest/api/2/issue/"))
+                        .basic_auth(&login, Some(&pass))
+                        .json(&my_jira_task)
+                        .send();
+                    res
+                }
+            };
 
-            let res = client
-                .post(&(self.jira_url.clone() + "/rest/api/2/issue/"))
-                .basic_auth(&login, Some(&pass))
-                .json(&my_jira_task)
-                .send();
             let mut actual_response = res.expect("Error sending JIRA request");
             if actual_response.status().is_success() {
                 let added_task = actual_response
