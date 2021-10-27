@@ -18,15 +18,20 @@ result=`curl -u jczaja:$pass -H Content-Type: application/json -X GET  https://j
 
 board_url=`echo $result | sed 's:.*self"\:"::' | cut -f 1 -d '"'`
  
+echo "result: $result"
 
 #echo "result: $result"
 echo "board_url: $board_url"
 
 
-result=`curl -u jczaja:$pass -H Content-Type: application/json -X GET  $board_url/issue` 
-echo "Issues: $result"
+#result=`curl -u jczaja:$pass -H Content-Type: application/json -X GET  $board_url/issue` 
+#echo "Issues: $result"
 
 
+# get list of epics
+result=`curl -u jczaja:$pass -H Content-Type: application/json -X GET https://jira.devtools.intel.com/rest/api/2/search?jql=project=Paddle&issuetype=Epic` 
+
+echo "Epics: $result"
 
 # Take the first one
 

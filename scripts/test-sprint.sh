@@ -12,6 +12,12 @@ echo "open the terminal: ${myassoc['open the terminal']}"
 #Get password from user
 pass=`zenity --password`
 
+# get custom field
+result=`curl -u jczaja:$pass -H Content-Type: application/json -X GET  https://jira.devtools.intel.com/rest/api/2/field`
+#echo "Field: $result"
+
+
+
 # Get board
 result=`curl -u jczaja:$pass -H Content-Type: application/json -X GET  https://jira.devtools.intel.com/rest/agile/1.0/board?projectKeyOrId=PADDLEQ` 
 
