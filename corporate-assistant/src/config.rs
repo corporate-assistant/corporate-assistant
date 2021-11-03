@@ -129,7 +129,7 @@ pub mod configuration {
         }
 
         pub fn get_mailer_config(&self) -> PathBuf {
-            let mut config_name = PathBuf::(&self.config_dir);
+            let mut config_name = PathBuf::from(&self.config_dir);
             config_name.push("email_client.toml");
 
             let config_name = Path::new(&config_name);
@@ -146,7 +146,8 @@ pub mod configuration {
 
                 let mut file = File::create(config_name).expect(&format!(
                     "Unable to create default email client config: {}",
-                    config_name.to_str().unwrap()));
+                    config_name.to_str().unwrap()
+                ));
 
                 file.write_all(default_content.as_bytes())
                     .expect("Failure saving email client config file");
