@@ -83,7 +83,7 @@ pub mod configuration {
             config_name.push("paddle.toml"); //TODO: make it given from commandline
             let config_name = Path::new(&config_name);
             if config_name.exists() == false {
-                let default_content = " 
+                let default_content = "
                 [github]
                 user = \"<your github id>\"
                 token = \"<your github token>\"
@@ -125,6 +125,34 @@ pub mod configuration {
                 file.write_all(default_content.as_bytes())
                     .expect("Failure in writting custom script");
             }
+            config_name.to_path_buf()
+        }
+
+        pub fn get_mailer_config(&self) -> PathBuf {
+            let mut config_name = PathBuf::from(&self.config_dir);
+            config_name.push("email_client.toml");
+
+            let config_name = Path::new(&config_name);
+
+            if config_name.exists() == false {
+                let default_content = "[email]
+                    login = \"<your Intel username\"
+                    password = \"<your Intel password\"
+                    server = \"<an smtp server for email communication>\"
+                    port = 0
+                    from = \"<sender>\"
+                    to = \"<receiver>\"
+                ";
+
+                let mut file = File::create(config_name).expect(&format!(
+                    "Unable to create default email client config: {}",
+                    config_name.to_str().unwrap()
+                ));
+
+                file.write_all(default_content.as_bytes())
+                    .expect("Failure saving email client config file");
+            }
+
             config_name.to_path_buf()
         }
     }

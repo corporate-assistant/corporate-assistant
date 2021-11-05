@@ -1,5 +1,5 @@
 pub mod actions {
-    use crate::config::configuration;
+    use crate::configuration;
     use corporate_assistant::interpreter::CorporateAction;
     pub use github_crawler::{get_contributions, parse_config, Conf, Contrib, RepoContribs};
     pub use mailer::{Client, Email};
@@ -28,7 +28,6 @@ pub mod actions {
             let config_file = conf.config_file.clone();
             let (config, _) = parse_config(config_file);
             let contribs = get_contributions(conf, config.unwrap());
-            //            MSR::print_text(&contribs);
             MSR::send_msr_email(&contribs);
         }
     }
@@ -87,9 +86,8 @@ pub mod actions {
             ()
         }
 
-        fn parse_config_file(email_config_file: String) -> EmailConfig {
-            let path = std::path::PathBuf::from(email_config_file);
-            let file = std::fs::File::open(path);
+        fn parse_config_file(email_config_file: std::path::PathBuf) -> EmailConfig {
+            let file = std::fs::File::open(email_config_file);
             let mut reader = std::io::BufReader::new(file.expect("Cannot open file"));
 
             let mut c: String = "".to_string();
@@ -112,7 +110,8 @@ pub mod actions {
         fn send_msr_email(repo_contribs: &RepoContribs) -> () {
             use chrono::Datelike;
 
-            let email_config = Self::parse_config_file("C:\\Users\\tpatejko\\projects\\corporate-assistant\\corporate-assistant\\corporate-assistant\\email_client.toml".to_string());
+            let ca_config = configuration::CAConfig::new();
+            let email_config = Self::parse_config_file(ca_config.get_mailer_config());
 
             let month = chrono::Utc::now().date().month();
             let year = chrono::Utc::now().date().year();
@@ -129,6 +128,8 @@ pub mod actions {
     mod tests {
         use super::*;
         use std::rc::Rc;
+        use tts::*;
+
         #[test]
         fn test_register() -> Result<(), String> {
             let mut intents = corporate_assistant::interpreter::Intents::new();
@@ -152,34 +153,13 @@ pub mod actions {
         }
 
         #[test]
-        fn test_parse_empty_email_config() {
-            let path = "C:\\Users\\tpatejko\\projects\\corporate-assistant\\corporate-assistant\\corporate-assistant\\email_client_empty.toml";
-            let email_config = MSR::parse_config_file(path.to_string());
-            assert_eq!(email_config.login, "");
-            assert_eq!(email_config.port, 0);
-        }
+        #[ignore]
+        fn test_msr() -> Result<(), String> {
+            let mut tts = TTS::default().expect("Problem starting TTS engine");
 
-        #[test]
-        fn test_parse_email_config() {
-            let path = "C:\\Users\\tpatejko\\projects\\corporate-assistant\\corporate-assistant\\corporate-assistant\\email_client.toml";
-            let email_config = MSR::parse_config_file(path.to_string());
-            assert_eq!(email_config.login, "tpatejko");
-            assert_eq!(email_config.port, 587);
-            assert_eq!(email_config.server, "smtpauth.intel.com");
-        }
-
-        #[test]
-        fn test_send_email() {
-            let email_config = EmailConfig {
-                login: "tpatejko".to_string(),
-                password: "l4Hm:Ng)9".to_string(),
-                server: "smtpauth.intel.com".to_string(),
-                port: 587,
-                from: "tomasz.patejko@gmail.com".to_string(),
-                to: "tomasz.patejko@intel.com".to_string(),
-            };
-
-            MSR::send_email(&email_config, &"Test".to_string(), &"Content".to_string());
+            let msr = MSR::new(4);
+            msr.run(&mut tts);
+            Ok(())
         }
     }
 }
