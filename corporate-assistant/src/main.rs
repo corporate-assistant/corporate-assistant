@@ -133,6 +133,10 @@ fn main() {
             Rc::new(ca::actions::CreateCustomAction::new()),
         )
         .expect("Registration failed");
+    // Register custom actions
+    // TODO(jczaja): Make a function to register custom actions 
+    let custom_action_config_file = configuration::CAConfig::new().get_custom_action_config();
+    let custom_actions = custom_action::parse_config(custom_action_config_file);
     intents
         .register_action(
             vec![

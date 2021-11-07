@@ -41,4 +41,18 @@ pub mod actions {
             Self {}
         }
     }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use tts::*;
+
+        #[test]
+        fn test_custom_action() -> Result<(), String> {
+            let mut tts = TTS::default().expect("Problem starting TTS engine");
+
+            CreateCustomAction::new().run(&mut tts);
+            Ok(())
+        }
+    }
 }
