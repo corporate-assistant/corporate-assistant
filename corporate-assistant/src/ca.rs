@@ -67,6 +67,7 @@ pub mod actions {
         use tts::*;
 
         #[test]
+        #[ignore]
         fn test_custom_action() -> Result<(), String> {
             let mut tts = TTS::default().expect("Problem starting TTS engine");
 
