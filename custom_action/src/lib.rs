@@ -312,7 +312,7 @@ mod tests {
             "dir"
         } else {
             "ls"
-            //"gnome-terminal -- tmux"
+            //"gnome-terminal -- sudo iptraf-ng -g" //Network monitoring
         });
         assert_eq!(status, true);
     }
