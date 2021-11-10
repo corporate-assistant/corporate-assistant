@@ -47,6 +47,31 @@ pub mod configuration {
         }
 
         // If no custom script found then make a default one
+        pub fn get_custom_action_config(&self) -> PathBuf {
+            let base_config_name = "custom_actions.toml";
+            let mut config_name = PathBuf::from(&self.config_dir);
+            config_name.push(base_config_name);
+            let config_name = Path::new(&config_name);
+            // No script then put default script value there
+            if config_name.exists() == false {
+                //TODO(jczaja): Port to windows
+                let default_content = if cfg!(target_os = "windows") {
+                    "custom actions = [{phrase = \"open the terminal\", script = \"\"}]"
+                } else {
+                    "custom actions = [{phrase = \"open the terminal\", script = \"gnome-terminal -- tmux\"}]"
+                };
+                let mut file = File::create(config_name).expect(&format!(
+                    "Unable to create default custom action config: {}",
+                    config_name.to_str().unwrap()
+                ));
+                file.write_all(default_content.as_bytes())
+                    .expect("Failure in writting custom script");
+            }
+            config_name.to_path_buf()
+        }
+
+        //TODO(jczaja): deprecated e.g. remove
+        // If no custom script found then make a default one
         pub fn get_custom_action_script(&self) -> PathBuf {
             let base_script_name = if cfg!(target_os = "windows") {
                 "custom_script.bat"

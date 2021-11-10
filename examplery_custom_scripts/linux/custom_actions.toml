@@ -1,0 +1,7 @@
+[[custom_actions]]
+ phrase = "open the terminal"
+ script = "gnome-terminal -- tmux"
+
+[[custom_actions]]
+ phrase = "monitor network"
+ script = "gnome-terminal -- sudo iptraf-ng -g"

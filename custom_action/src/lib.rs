@@ -2,9 +2,15 @@
 //   we put this script there
 // 2. Upon finishing to edit Save a script
 
+use serde::Deserialize;
+use toml;
+
 use fltk::{
-    app, dialog,
+    app,
+    button::Button,
+    dialog,
     enums::{CallbackTrigger, Color, Event, Font, FrameType, Shortcut},
+    frame::Frame,
     menu,
     prelude::*,
     text, window,
@@ -148,9 +154,34 @@ impl MyApp {
             .with_size(800, 600)
             .center_screen()
             .with_label(&("Editing => ".to_string() + &filename));
+
+        let vpack = fltk::group::Pack::default()
+            .with_size(800, 600)
+            .center_of(&main_win);
+
+        // TODO(jczaja): Make this phrase from recording
+        let candidate_phrase: &str = "<custom action phrase>";
+
         let _menu = MyMenu::new(&s);
+        // Custom phrase based on typed characters or recorded phrase
+        let mut hpack = fltk::group::Pack::default()
+            .with_size(600, 25)
+            .above_of(&vpack, 0);
+        hpack.set_type(fltk::group::PackType::Horizontal);
+        let _frame = Frame::default()
+            .with_size(150, 25)
+            .with_label("Custom phrase:");
+        let mut tb = text::TextBuffer::default();
+        tb.set_text(candidate_phrase);
+        let mut te = text::TextEditor::default().with_size(350, 0);
+        te.set_buffer(Some(tb));
+        te.set_insert_mode(true);
+        hpack.end();
+
         let mut editor = ScriptEditor::new(buf.clone());
         editor.emit(s, Message::Changed);
+        vpack.end();
+
         main_win.make_resizable(true);
         // only resize editor, not the menu bar
         main_win.resizable(&*editor);
@@ -232,10 +263,8 @@ fn load_script(script_name: &PathBuf) -> String {
     contents
 }
 
-pub fn action_executor(script_name: PathBuf) {
+pub fn action_executor(script: &str) -> bool {
     // Executing an action from script
-    println!("Script to be executed: {}", script_name.display());
-    println!("Script:\n {}", load_script(&script_name));
     let output = if cfg!(target_os = "windows") {
         Command::new("cmd")
             .args(&["/C", "echo hello"])
@@ -243,10 +272,48 @@ pub fn action_executor(script_name: PathBuf) {
             .expect("failed to execute process")
     } else {
         Command::new("bash")
-            .arg(script_name.into_os_string())
+            .arg("-c")
+            .arg("eval ".to_string() + script)
             .output()
             .expect("failed to execute process")
     };
     let stdout = output.stdout;
     println!("out: {}", String::from_utf8(stdout).unwrap());
+    output.status.success()
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CustomActions {
+    pub custom_actions: Vec<CustomAction>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CustomAction {
+    pub phrase: String, // Command to execute..
+    pub script: String, // ..script
+}
+
+pub fn parse_config(path: PathBuf) -> CustomActions {
+    let file = std::fs::File::open(path);
+    let mut reader = std::io::BufReader::new(file.expect("Cannot open file"));
+
+    let mut c: String = "".to_string();
+    reader.read_to_string(&mut c);
+    toml::from_str(&c).expect("Error: Parsing of custom actions config")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_simple_action() {
+        let status = action_executor(if cfg!(target_os = "windows") {
+            "dir"
+        } else {
+            "ls"
+            //"gnome-terminal -- sudo iptraf-ng -g" //Network monitoring
+        });
+        assert_eq!(status, true);
+    }
 }
