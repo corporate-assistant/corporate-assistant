@@ -85,6 +85,10 @@ fn main() {
     // Registration of actions
     let mut intents = corporate_assistant::interpreter::Intents::new();
 
+    // Register custom actions
+    ca::actions::register_custom_actions(&mut intents);
+
+    // JIRA Helper
     match jira_config {
         Some(jira) => {
             intents
@@ -133,19 +137,7 @@ fn main() {
             Rc::new(ca::actions::CreateCustomAction::new()),
         )
         .expect("Registration failed");
-    // Register custom actions
-    // TODO(jczaja): Make a function to register custom actions 
-    let custom_action_config_file = configuration::CAConfig::new().get_custom_action_config();
-    let custom_actions = custom_action::parse_config(custom_action_config_file);
-    intents
-        .register_action(
-            vec![
-                "execute custom action".to_string(),
-                "run custom action".to_string(),
-            ],
-            Rc::new(ca::actions::ExecuteCustomAction::new()),
-        )
-        .expect("Registration failed");
+
 
     match org_info.restaurants {
         Some(i) => {
