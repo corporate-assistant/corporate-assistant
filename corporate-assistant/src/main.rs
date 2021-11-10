@@ -138,7 +138,6 @@ fn main() {
         )
         .expect("Registration failed");
 
-
     match org_info.restaurants {
         Some(i) => {
             intents

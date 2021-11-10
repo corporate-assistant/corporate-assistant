@@ -173,7 +173,12 @@ pub mod jira {
             let _frame = Frame::default()
                 .with_size(0, 50)
                 .with_label("Epics to link to:");
-            let epics = vec!["PADDLEQ-1575", "PADDLEQ-1249", "PADDLEQ-1259", "PADDLEQ-1254"]; // TODO(do something with it)
+            let epics = vec![
+                "PADDLEQ-1575",
+                "PADDLEQ-1249",
+                "PADDLEQ-1259",
+                "PADDLEQ-1254",
+            ]; // TODO(do something with it)
 
             let mut epics_list = Choice::new(0, 0, 0, 30, "");
             epics_list.add_choice(epics[0]); //fp32
