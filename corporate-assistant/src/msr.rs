@@ -21,7 +21,8 @@ pub mod actions {
             let conf = Conf {
                 from_date: chrono::Utc::now() - chrono::Duration::weeks(self.time_frame as i64),
                 to_date: chrono::Utc::now(),
-                config_file: configuration::CAConfig::new().get_repos_config(),
+                config_file: configuration::CAConfig::new()
+                    .get_repos_config(&self.project_config_file),
                 behind_proxy: true,
             };
 
@@ -33,6 +34,7 @@ pub mod actions {
     }
 
     pub struct MSR {
+        project_config_file: String,
         time_frame: u8,
     }
 
@@ -52,8 +54,9 @@ pub mod actions {
     }
 
     impl MSR {
-        pub fn new(time_frame: u8) -> Self {
+        pub fn new(project_config_file: &str, time_frame: u8) -> Self {
             MSR {
+                project_config_file: project_config_file.to_string(),
                 time_frame: time_frame,
             }
         }
@@ -141,7 +144,7 @@ pub mod actions {
                         "create my monthly status report".to_string(),
                         "create monthly status report".to_string(),
                     ],
-                    Rc::new(MSR::new(4)),
+                    Rc::new(MSR::new("dummy.toml", 4)),
                 )
                 .expect("Registration failed");
             // Get registered action
@@ -157,7 +160,7 @@ pub mod actions {
         fn test_msr() -> Result<(), String> {
             let mut tts = TTS::default().expect("Problem starting TTS engine");
 
-            let msr = MSR::new(4);
+            let msr = MSR::new("paddle.toml", 4);
             msr.run(&mut tts);
             Ok(())
         }

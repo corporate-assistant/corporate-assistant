@@ -474,7 +474,7 @@ pub mod jira {
             let organization_config_file =
                 configuration::CAConfig::new().get_organization_config("itp.toml");
             let org_info = configuration::parse_organization_config(&organization_config_file);
-            let config_file = configuration::CAConfig::new().get_repos_config();
+            let config_file = configuration::CAConfig::new().get_repos_config("paddle.toml");
             let (_, jira_config) = parse_config(config_file);
             let actual_config = jira_config.unwrap();
             let jira = JIRA::new(

@@ -32,6 +32,22 @@ fn main() {
                 .required(true),
         )
         .arg(
+            Arg::with_name("project")
+                .long("project")
+                .help("Name of project configuration file")
+                .value_name("FILE")
+                .takes_value(true)
+                .required(true),
+        )
+        .arg(
+            Arg::with_name("organization")
+                .long("organization")
+                .help("Name of organization configuration file")
+                .value_name("FILE")
+                .takes_value(true)
+                .required(true),
+        )
+        .arg(
             Arg::with_name("scorer")
                 .long("scorer")
                 .help("Sets model scorer")
@@ -75,11 +91,18 @@ fn main() {
     println!("{}", result);
 
     // Origanization/site info
-    let organization_config_file =
-        configuration::CAConfig::new().get_organization_config("itp.toml");
+    let organization_config_file = configuration::CAConfig::new().get_organization_config(
+        matches
+            .value_of("organization")
+            .expect("Please set organization config file"),
+    );
+
     let org_info = configuration::parse_organization_config(&organization_config_file);
     // Project info
-    let config_file = configuration::CAConfig::new().get_repos_config();
+    let project_config_file = matches
+        .value_of("project")
+        .expect("Please set project config file");
+    let config_file = configuration::CAConfig::new().get_repos_config(project_config_file);
     let (_, jira_config) = parse_config(config_file);
 
     // Registration of actions
@@ -114,7 +137,7 @@ fn main() {
                 "create my monthly status report".to_string(),
                 "create monthly status report".to_string(),
             ],
-            Rc::new(msr::actions::MSR::new(4)),
+            Rc::new(msr::actions::MSR::new(project_config_file, 4)),
         )
         .expect("Registration failed");
     intents
@@ -125,7 +148,7 @@ fn main() {
                 "create my weekly status report".to_string(),
                 "create weekly status report".to_string(),
             ],
-            Rc::new(msr::actions::MSR::new(1)),
+            Rc::new(msr::actions::MSR::new(project_config_file, 1)),
         )
         .expect("Registration failed");
     intents
