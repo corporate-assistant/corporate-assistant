@@ -10,5 +10,6 @@ apt-get install -y speech-dispatcher libspeechd-dev libsdl2-dev libbpango1.0-dev
 2. Download/train model and scorer of deepspeech (https://github.com/mozilla/DeepSpeech/releases)
 3. Build transcriber: __LIBRARY_PATH=&lt;path to native client&gt; cargo build --release__
 4. Run transcriber: __LD_LIBRARY_PATH=&lt;path to native client&gt; ./target/release/corporate-assistant
-    --model &lt;path to deepspeech model to use&gt; --scorer &lt;path to scorer (optionally)&gt;__
+    --model &lt;path to deepspeech model to use&gt; --scorer &lt;path to scorer (optionally)&gt; 
+    --project &lt;path to project config file&gt; --organization &lt;path to organization config file&gt;__
 
