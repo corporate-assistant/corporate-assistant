@@ -21,7 +21,7 @@ pub mod actions {
             let conf = Conf {
                 from_date: chrono::Utc::now() - chrono::Duration::weeks(self.time_frame as i64),
                 to_date: chrono::Utc::now(),
-                config_file: configuration::CAConfig::new().get_repos_config(),
+                config_file: configuration::CAConfig::new().get_repos_config(&self.project_config_file),
                 behind_proxy: true,
             };
 
@@ -33,6 +33,7 @@ pub mod actions {
     }
 
     pub struct MSR {
+        project_config_file: String,
         time_frame: u8,
     }
 
@@ -52,8 +53,9 @@ pub mod actions {
     }
 
     impl MSR {
-        pub fn new(time_frame: u8) -> Self {
+        pub fn new(project_config_file : &str, time_frame: u8) -> Self {
             MSR {
+                project_config_file : project_config_file.to_string(),
                 time_frame: time_frame,
             }
         }

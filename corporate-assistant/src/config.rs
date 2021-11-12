@@ -56,9 +56,17 @@ pub mod configuration {
             if config_name.exists() == false {
                 //TODO(jczaja): Port to windows
                 let default_content = if cfg!(target_os = "windows") {
-                    "custom actions = [{phrase = \"open the terminal\", script = \"\"}]"
+                    r#"
+                    [[custom_actions]]
+                     phrase = "open the terminal"
+                     script = "gnome-terminal -- tmux"
+                    "#
                 } else {
-                    "custom actions = [{phrase = \"open the terminal\", script = \"gnome-terminal -- tmux\"}]"
+                    r#"
+                    [[custom_actions]]
+                     phrase = "open the terminal"
+                     script = "gnome-terminal -- tmux"
+                    "#
                 };
                 let mut file = File::create(config_name).expect(&format!(
                     "Unable to create default custom action config: {}",
@@ -103,9 +111,9 @@ pub mod configuration {
         }
 
         // TODO(jczaja) Make next two methods unified into one
-        pub fn get_repos_config(&self) -> PathBuf {
+        pub fn get_repos_config(&self, project : &str) -> PathBuf {
             let mut config_name = PathBuf::from(&self.config_dir);
-            config_name.push("paddle.toml"); //TODO: make it given from commandline
+            config_name.push(project);
             let config_name = Path::new(&config_name);
             if config_name.exists() == false {
                 let default_content = "
