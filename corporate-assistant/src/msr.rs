@@ -144,7 +144,7 @@ pub mod actions {
                         "create my monthly status report".to_string(),
                         "create monthly status report".to_string(),
                     ],
-                    Rc::new(MSR::new(4)),
+                    Rc::new(MSR::new("dummy.toml", 4)),
                 )
                 .expect("Registration failed");
             // Get registered action
@@ -160,7 +160,7 @@ pub mod actions {
         fn test_msr() -> Result<(), String> {
             let mut tts = TTS::default().expect("Problem starting TTS engine");
 
-            let msr = MSR::new(4);
+            let msr = MSR::new("paddle.toml", 4);
             msr.run(&mut tts);
             Ok(())
         }
