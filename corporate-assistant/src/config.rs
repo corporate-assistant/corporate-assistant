@@ -111,7 +111,7 @@ pub mod configuration {
         }
 
         // TODO(jczaja) Make next two methods unified into one
-        pub fn get_repos_config(&self, project : &str) -> PathBuf {
+        pub fn get_repos_config(&self, project: &str) -> PathBuf {
             let mut config_name = PathBuf::from(&self.config_dir);
             config_name.push(project);
             let config_name = Path::new(&config_name);

@@ -99,7 +99,9 @@ fn main() {
 
     let org_info = configuration::parse_organization_config(&organization_config_file);
     // Project info
-    let project_config_file = matches .value_of("project").expect("Please set project config file");
+    let project_config_file = matches
+        .value_of("project")
+        .expect("Please set project config file");
     let config_file = configuration::CAConfig::new().get_repos_config(project_config_file);
     let (_, jira_config) = parse_config(config_file);
 
@@ -135,7 +137,7 @@ fn main() {
                 "create my monthly status report".to_string(),
                 "create monthly status report".to_string(),
             ],
-            Rc::new(msr::actions::MSR::new(project_config_file,4)),
+            Rc::new(msr::actions::MSR::new(project_config_file, 4)),
         )
         .expect("Registration failed");
     intents
@@ -146,7 +148,7 @@ fn main() {
                 "create my weekly status report".to_string(),
                 "create weekly status report".to_string(),
             ],
-            Rc::new(msr::actions::MSR::new(project_config_file,1)),
+            Rc::new(msr::actions::MSR::new(project_config_file, 1)),
         )
         .expect("Registration failed");
     intents
