@@ -12,6 +12,7 @@ use fltk::{
     enums::{CallbackTrigger, Color, Event, Font, FrameType, Shortcut},
     frame::Frame,
     menu,
+    menu::Choice,
     prelude::*,
     text, window,
 };
@@ -133,34 +134,32 @@ impl MyMenu {
 pub struct MyApp {
     app: app::App,
     saved: bool,
-    filename: String,
+    custom_actions: CustomActions,
     r: app::Receiver<Message>,
     buf: text::TextBuffer,
     editor: ScriptEditor,
     printable: text::TextDisplay,
+    ca_list: menu::Choice,
+    te: text::TextEditor,
 }
 
 impl MyApp {
-    pub fn new(script_name: PathBuf) -> Self {
+    pub fn new(custom_action_config_file: PathBuf) -> Self {
         let app = app::App::default().with_scheme(app::Scheme::Gtk);
         app::background(211, 211, 211);
-        let filename: String = script_name.into_os_string().into_string().unwrap();
+        let custom_actions = parse_config(custom_action_config_file);
 
         let (s, r) = app::channel::<Message>();
         let mut buf = text::TextBuffer::default();
-        buf.load_file(&filename).expect("Error loading script file");
         buf.set_tab_distance(4);
         let mut main_win = window::Window::default()
             .with_size(800, 600)
             .center_screen()
-            .with_label(&("Editing => ".to_string() + &filename));
+            .with_label("Editing custom action ");
 
         let vpack = fltk::group::Pack::default()
             .with_size(800, 600)
             .center_of(&main_win);
-
-        // TODO(jczaja): Make this phrase from recording
-        let candidate_phrase: &str = "<custom action phrase>";
 
         let _menu = MyMenu::new(&s);
         // Custom phrase based on typed characters or recorded phrase
@@ -172,10 +171,24 @@ impl MyApp {
             .with_size(150, 25)
             .with_label("Custom phrase:");
         let mut tb = text::TextBuffer::default();
-        tb.set_text(candidate_phrase);
+        tb.set_text("<custom action phrase>");
         let mut te = text::TextEditor::default().with_size(350, 0);
         te.set_buffer(Some(tb));
         te.set_insert_mode(true);
+        // Drop down menu with existing actions to load
+        let mut ca_list = Choice::new(0, 0, 150, 0, "");
+        //        for ca in custom_actions.custom_actions.iter() {
+        //           println!("Registring phrase: {}", ca.phrase);
+        //         println!("  with script: {}", ca.script);
+        custom_actions
+            .custom_actions
+            .iter()
+            .for_each(|x| ca_list.add_choice(&x.phrase));
+        ca_list.emit(s, Message::Changed);
+
+        let mut save_button = Button::default().with_size(50, 0).with_label("Save"); // TODO: Make save custom action
+                                                                                     // Recording of phrase
+        let mut record_button = Button::default().with_size(80, 0).with_label("Record"); // TODO: Make recording and transcription
         hpack.end();
 
         let mut editor = ScriptEditor::new(buf.clone());
@@ -202,16 +215,19 @@ impl MyApp {
         Self {
             app,
             saved: true,
-            filename,
+            custom_actions,
             r,
             buf,
             editor,
             printable,
+            ca_list,
+            te,
         }
     }
 
     pub fn save_file(&mut self) -> Result<(), Box<dyn error::Error>> {
-        self.buf.save_file(&self.filename)?;
+        //self.buf.save_file(&self.filename)?;
+        // TODO: Implement appending new action into config
         self.saved = true;
         Ok(())
     }
@@ -221,7 +237,22 @@ impl MyApp {
             use Message::*;
             if let Some(msg) = self.r.recv() {
                 match msg {
-                    Changed => self.saved = false,
+                    Changed => {
+                        match self.ca_list.value() {
+                            -1 => (),
+                            _ => {
+                                // Set phrase from dropdown into phrase input field
+                                let ca = &self.custom_actions.custom_actions
+                                    [self.ca_list.value() as usize];
+                                self.te.buffer().unwrap().set_text(&ca.phrase);
+                                // Put corressponding script into script editor
+                                // find script for phrase and put script into editor
+                                self.editor.buffer().unwrap().set_text(&ca.script);
+                            }
+                        }
+
+                        self.saved = false
+                    }
                     Save => self.save_file().unwrap(),
                     Quit => {
                         if !self.saved {
@@ -248,10 +279,9 @@ impl MyApp {
     }
 }
 
-pub fn action_creator(script_name: PathBuf) {
-    // Load a script into editor in order to have it edited by user
-    println!("Script {} editing!", script_name.display());
-    let mut app = MyApp::new(script_name);
+pub fn action_creator(custom_action_config_file: PathBuf) {
+    // Get user script name and pass it to be executed
+    let mut app = MyApp::new(custom_action_config_file);
     app.launch();
 }
 

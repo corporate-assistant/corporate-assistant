@@ -12,8 +12,9 @@ pub mod actions {
             tts.speak("Please edit custom action script", true)
                 .expect("Problem with utterance");
             // Get user script name and pass it to be executed
-            let script_name = configuration::CAConfig::new().get_custom_action_script();
-            action_creator(script_name);
+            let custom_action_config_file =
+                configuration::CAConfig::new().get_custom_action_config();
+            action_creator(custom_action_config_file);
         }
     }
 
