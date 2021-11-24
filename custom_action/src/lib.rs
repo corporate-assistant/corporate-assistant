@@ -27,6 +27,7 @@ use std::{
 
 #[derive(Copy, Clone)]
 pub enum Message {
+    ChoiceChanged,
     Changed,
     Save,
     Quit,
@@ -135,6 +136,7 @@ pub struct MyApp {
     app: app::App,
     saved: bool,
     custom_actions: CustomActions,
+    ca_filename: PathBuf,
     r: app::Receiver<Message>,
     buf: text::TextBuffer,
     editor: ScriptEditor,
@@ -147,15 +149,21 @@ impl MyApp {
     pub fn new(custom_action_config_file: PathBuf) -> Self {
         let app = app::App::default().with_scheme(app::Scheme::Gtk);
         app::background(211, 211, 211);
-        let custom_actions = parse_config(custom_action_config_file);
+        let custom_actions = parse_config(custom_action_config_file.clone());
 
         let (s, r) = app::channel::<Message>();
         let mut buf = text::TextBuffer::default();
         buf.set_tab_distance(4);
+        let title = format!(
+            "Editing => {}",
+            custom_action_config_file
+                .to_str()
+                .expect("Problem with filename of custom action config")
+        );
         let mut main_win = window::Window::default()
             .with_size(800, 600)
             .center_screen()
-            .with_label("Editing custom action ");
+            .with_label(&title);
 
         let vpack = fltk::group::Pack::default()
             .with_size(800, 600)
@@ -184,10 +192,8 @@ impl MyApp {
             .custom_actions
             .iter()
             .for_each(|x| ca_list.add_choice(&x.phrase));
-        ca_list.emit(s, Message::Changed);
-
-        let mut save_button = Button::default().with_size(50, 0).with_label("Save"); // TODO: Make save custom action
-                                                                                     // Recording of phrase
+        ca_list.emit(s, Message::ChoiceChanged);
+        // Recording of phrase
         let mut record_button = Button::default().with_size(80, 0).with_label("Record"); // TODO: Make recording and transcription
         hpack.end();
 
@@ -216,6 +222,7 @@ impl MyApp {
             app,
             saved: true,
             custom_actions,
+            ca_filename: custom_action_config_file,
             r,
             buf,
             editor,
@@ -226,8 +233,17 @@ impl MyApp {
     }
 
     pub fn save_file(&mut self) -> Result<(), Box<dyn error::Error>> {
-        //self.buf.save_file(&self.filename)?;
-        // TODO: Implement appending new action into config
+        // Read a custom action config file and append currently edited action
+        let mut buf = text::TextBuffer::default();
+        buf.load_file(&self.ca_filename)?;
+
+        let mut content_to_append: String = "\n[[custom_actions]]\n phrase = \"".to_string();
+        content_to_append += &self.te.buffer().unwrap().text().trim();
+        content_to_append += "\"\n script = \"\"\"";
+        content_to_append += &self.buf.text();
+        content_to_append += "\"\"\"\n";
+        buf.append(&content_to_append);
+        buf.save_file(&self.ca_filename)?;
         self.saved = true;
         Ok(())
     }
@@ -237,7 +253,8 @@ impl MyApp {
             use Message::*;
             if let Some(msg) = self.r.recv() {
                 match msg {
-                    Changed => {
+                    Changed => self.saved = false,
+                    ChoiceChanged => {
                         match self.ca_list.value() {
                             -1 => (),
                             _ => {
@@ -250,7 +267,6 @@ impl MyApp {
                                 self.editor.buffer().unwrap().set_text(&ca.script);
                             }
                         }
-
                         self.saved = false
                     }
                     Save => self.save_file().unwrap(),
