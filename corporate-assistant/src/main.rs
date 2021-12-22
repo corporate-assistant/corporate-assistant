@@ -10,6 +10,7 @@ use github_crawler::parse_config;
 use std::fs::create_dir_all;
 use std::path::Path;
 use std::rc::Rc;
+use std::cell::RefCell;
 use std::{thread, time};
 use tts::*;
 
@@ -61,14 +62,15 @@ fn main() {
 
     let model_path = Path::new(&model_file_path);
     // Load DS model to memory
-    let mut m = Model::load_from_files(&model_path).unwrap();
+    let m = Rc::new(RefCell::new(Model::load_from_files(&model_path).unwrap()));
     match scorer_file_path {
         Some(s) => {
             let scorer_path = Path::new(&s);
-            m.enable_external_scorer(&scorer_path).unwrap();
+            m.borrow_mut().enable_external_scorer(&scorer_path).unwrap();
         }
         None => (),
     }
+
 
     // either read audio from file or from mic
     let result: String;
@@ -76,7 +78,8 @@ fn main() {
     // arecord -r 16000 -f S16_LE $filename.wav
     // if only utterance is completed
     let mut tts = TTS::default().expect("Problem starting TTS engine");
-    let rec = Recorder::new();
+    let rec = Rc::new(Recorder::new());
+
     tts.speak("I'm listening", true)
         .expect("Problem with utterance");
     // TTS finished talking e.g. sending data to speaker
@@ -85,7 +88,7 @@ fn main() {
     let canceling_pause = time::Duration::from_millis(400);
     thread::sleep(canceling_pause);
     let (recorded_vec, channels, freq) = rec.record().expect("Problem with recording audio");
-    result = m.speech_to_text(&recorded_vec).unwrap();
+    result = m.borrow_mut().speech_to_text(&recorded_vec).unwrap();
     // Output the result
     eprintln!("Transcription:");
     println!("{}", result);
@@ -105,9 +108,9 @@ fn main() {
     let config_file = configuration::CAConfig::new().get_repos_config(project_config_file);
     let (_, jira_config) = parse_config(config_file);
 
+
     // Registration of actions
     let mut intents = corporate_assistant::interpreter::Intents::new();
-
     // Register custom actions
     ca::actions::register_custom_actions(&mut intents);
 
@@ -157,7 +160,7 @@ fn main() {
                 "create custom action".to_string(),
                 "compose custom action".to_string(),
             ],
-            Rc::new(ca::actions::CreateCustomAction::new()),
+            Rc::new(ca::actions::CreateCustomAction::new(m,rec.clone())),
         )
         .expect("Registration failed");
 
