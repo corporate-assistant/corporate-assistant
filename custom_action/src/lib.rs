@@ -258,9 +258,9 @@ impl MyApp {
 
         let mut content_to_append: String = "\n[[custom_actions]]\n phrase = \"".to_string();
         content_to_append += &self.te.buffer().unwrap().text().trim();
-        content_to_append += "\"\n script = \"\"\"";
+        content_to_append += "\"\n script = \'\'\'";
         content_to_append += &self.buf.text();
-        content_to_append += "\"\"\"\n";
+        content_to_append += "\'\'\'\n";
         buf.append(&content_to_append);
         buf.save_file(&self.ca_filename)?;
         self.saved = true;
@@ -373,7 +373,7 @@ pub fn action_executor(script: &str) -> bool {
     } else {
         Command::new("bash")
             .arg("-c")
-            .arg("eval ".to_string() + script)
+            .arg(script)
             .output()
             .expect("failed to execute process")
     };
@@ -411,7 +411,9 @@ mod tests {
         let status = action_executor(if cfg!(target_os = "windows") {
             "dir"
         } else {
-            "ls"
+            r####"ls;
+            whoami;
+            date"####
             //"gnome-terminal -- sudo iptraf-ng -g" //Network monitoring
         });
         assert_eq!(status, true);
