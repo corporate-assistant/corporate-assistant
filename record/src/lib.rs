@@ -26,9 +26,7 @@ pub mod recorder {
     pub struct Recorder {
         sdl_context: sdl2::Sdl,
         audio_subsystem: sdl2::AudioSubsystem,
-        capture_device: sdl2::audio::AudioDevice<Recording>,
         desired_spec: sdl2::audio::AudioSpecDesired,
-        done_receiver: mpsc::Receiver<Vec<i16>>,
     }
 
     // Player
@@ -87,10 +85,19 @@ pub mod recorder {
                 RECORDING_LENGTH_SECONDS
             );
 
+            Self {
+                sdl_context: sdl_context,
+                audio_subsystem: audio_subsystem,
+                desired_spec: desired_spec,
+            }
+        }
+
+        pub fn record(&self) -> Result<(Vec<i16>, u16, u32), String> {
             let (done_sender, done_receiver) = mpsc::channel();
 
-            let capture_device = audio_subsystem
-                .open_capture(None, &desired_spec, |spec| {
+            let capture_device = self
+                .audio_subsystem
+                .open_capture(None, &self.desired_spec, |spec| {
                     eprintln!("Capture Spec = {:?}", spec);
                     Recording {
                         record_buffer: vec![
@@ -100,7 +107,7 @@ pub mod recorder {
                                 * spec.channels as usize
                         ],
                         pos: 0,
-                        done_sender,
+                        done_sender: done_sender,
                         done: false,
                     }
                 })
@@ -110,22 +117,12 @@ pub mod recorder {
                 "AudioDriver: {:?}",
                 capture_device.subsystem().current_audio_driver()
             );
-            Self {
-                sdl_context: sdl_context,
-                audio_subsystem: audio_subsystem,
-                capture_device: capture_device,
-                desired_spec: desired_spec,
-                done_receiver: done_receiver,
-            }
-        }
-
-        pub fn record(&self) -> Result<(Vec<i16>, u16, u32), String> {
-            self.capture_device.resume();
+            capture_device.resume();
 
             // Wait until the recording is done.
-            let recorded_vec = self.done_receiver.recv().map_err(|e| e.to_string())?;
+            let recorded_vec = done_receiver.recv().map_err(|e| e.to_string())?;
 
-            self.capture_device.pause();
+            capture_device.pause();
 
             // Device is automatically closed when dropped.
             // Depending on your system it might be even important that the capture_device is dropped

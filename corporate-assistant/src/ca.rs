@@ -3,9 +3,14 @@ pub mod actions {
     pub use custom_action::{action_creator, action_executor};
     //use config::configuration;
     use crate::config::configuration;
+    use record::recorder::Recorder;
+    use std::cell::RefCell;
     use std::rc::Rc;
 
-    pub struct CreateCustomAction {}
+    pub struct CreateCustomAction {
+        m: Rc<RefCell<deepspeech::Model>>,
+        rec: Rc<Recorder>,
+    }
 
     impl CorporateAction for CreateCustomAction {
         fn run(&self, tts: &mut tts::TTS) -> () {
@@ -14,13 +19,13 @@ pub mod actions {
             // Get user script name and pass it to be executed
             let custom_action_config_file =
                 configuration::CAConfig::new().get_custom_action_config();
-            action_creator(custom_action_config_file);
+            action_creator(custom_action_config_file, self.m.clone(), self.rec.clone());
         }
     }
 
     impl CreateCustomAction {
-        pub fn new() -> Self {
-            Self {}
+        pub fn new(m: Rc<RefCell<deepspeech::Model>>, rec: Rc<Recorder>) -> Self {
+            Self { m, rec }
         }
     }
 
@@ -65,6 +70,8 @@ pub mod actions {
     #[cfg(test)]
     mod tests {
         use super::*;
+        use deepspeech::Model;
+        use std::path::Path;
         use tts::*;
 
         #[test]
@@ -72,7 +79,17 @@ pub mod actions {
         fn test_custom_action() -> Result<(), String> {
             let mut tts = TTS::default().expect("Problem starting TTS engine");
 
-            CreateCustomAction::new().run(&mut tts);
+            let rec = Rc::new(Recorder::new());
+            // local model . Change to yours if needed
+            let model_path = Path::new("/home/jczaja/DEEPSPEECH/jacek-04-02-2021.pbmm");
+            let m = Rc::new(RefCell::new(Model::load_from_files(&model_path).unwrap()));
+            m.borrow_mut()
+                .enable_external_scorer(Path::new(
+                    "/home/jczaja/DEEPSPEECH/deepspeech-0.9.3-models.scorer",
+                ))
+                .unwrap();
+
+            CreateCustomAction::new(m, rec.clone()).run(&mut tts);
             Ok(())
         }
     }

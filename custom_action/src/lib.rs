@@ -2,7 +2,10 @@
 //   we put this script there
 // 2. Upon finishing to edit Save a script
 
+use record::recorder::Recorder;
 use serde::Deserialize;
+use std::cell::RefCell;
+use std::rc::Rc;
 use toml;
 
 use fltk::{
@@ -34,6 +37,9 @@ pub enum Message {
     Cut,
     Copy,
     Paste,
+    RecordOnClick,
+    RecordingStart,
+    RecordingStop,
 }
 
 pub fn center() -> (i32, i32) {
@@ -138,15 +144,23 @@ pub struct MyApp {
     custom_actions: CustomActions,
     ca_filename: PathBuf,
     r: app::Receiver<Message>,
+    s: app::Sender<Message>,
     buf: text::TextBuffer,
     editor: ScriptEditor,
     printable: text::TextDisplay,
     ca_list: menu::Choice,
     te: text::TextEditor,
+    record_button: Button,
+    m: Rc<RefCell<deepspeech::Model>>,
+    rec: Rc<Recorder>,
 }
 
 impl MyApp {
-    pub fn new(custom_action_config_file: PathBuf) -> Self {
+    pub fn new(
+        custom_action_config_file: PathBuf,
+        m: Rc<RefCell<deepspeech::Model>>,
+        rec: Rc<Recorder>,
+    ) -> Self {
         let app = app::App::default().with_scheme(app::Scheme::Gtk);
         app::background(211, 211, 211);
         let custom_actions = parse_config(custom_action_config_file.clone());
@@ -194,7 +208,8 @@ impl MyApp {
             .for_each(|x| ca_list.add_choice(&x.phrase));
         ca_list.emit(s, Message::ChoiceChanged);
         // Recording of phrase
-        let mut record_button = Button::default().with_size(80, 0).with_label("Record"); // TODO: Make recording and transcription
+        let mut record_button = Button::default().with_size(100, 0).with_label("Record");
+        record_button.emit(s, Message::RecordOnClick);
         hpack.end();
 
         let mut editor = ScriptEditor::new(buf.clone());
@@ -224,11 +239,15 @@ impl MyApp {
             custom_actions,
             ca_filename: custom_action_config_file,
             r,
+            s,
             buf,
             editor,
             printable,
             ca_list,
             te,
+            record_button,
+            m,
+            rec,
         }
     }
 
@@ -269,6 +288,37 @@ impl MyApp {
                         }
                         self.saved = false
                     }
+                    // First handle clicking on Record
+                    // We set label to "Recording" and cannot start Recording because
+                    // changing label has to be processed
+                    RecordOnClick => {
+                        println!("Record OnClick!");
+                        if self.record_button.label() == "Record" {
+                            self.record_button.set_label("Recording...");
+                            self.s.send(Message::RecordingStart);
+                        }
+                    }
+                    RecordingStart => {
+                        // When user clicked recording we change label to "Recording..."
+                        // And start listening process if only we are not already recording
+                        println!("Recording Started!");
+                        // Lets listen for 3 seconds of what user is saying
+                        let recording_s = self.s.clone();
+                        app::add_timeout(3 as f64, move || {
+                            recording_s.send(Message::RecordingStop);
+                        });
+                        let (recorded_vec, channels, freq) =
+                            self.rec.record().expect("Problem with recording audio");
+                        let result = self.m.borrow_mut().speech_to_text(&recorded_vec).unwrap();
+                        self.te.buffer().unwrap().set_text(&result);
+                        // Output the result
+                        eprintln!("Transcription:");
+                        println!("{}", result);
+                    }
+                    RecordingStop => {
+                        self.record_button.set_label("Record");
+                        println!("Recording Stoped!");
+                    }
                     Save => self.save_file().unwrap(),
                     Quit => {
                         if !self.saved {
@@ -295,9 +345,13 @@ impl MyApp {
     }
 }
 
-pub fn action_creator(custom_action_config_file: PathBuf) {
+pub fn action_creator(
+    custom_action_config_file: PathBuf,
+    m: Rc<RefCell<deepspeech::Model>>,
+    rec: Rc<Recorder>,
+) {
     // Get user script name and pass it to be executed
-    let mut app = MyApp::new(custom_action_config_file);
+    let mut app = MyApp::new(custom_action_config_file, m, rec);
     app.launch();
 }
 
