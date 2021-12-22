@@ -85,7 +85,6 @@ pub mod recorder {
                 RECORDING_LENGTH_SECONDS
             );
 
-
             Self {
                 sdl_context: sdl_context,
                 audio_subsystem: audio_subsystem,
@@ -94,10 +93,10 @@ pub mod recorder {
         }
 
         pub fn record(&self) -> Result<(Vec<i16>, u16, u32), String> {
-
             let (done_sender, done_receiver) = mpsc::channel();
 
-            let capture_device = self.audio_subsystem
+            let capture_device = self
+                .audio_subsystem
                 .open_capture(None, &self.desired_spec, |spec| {
                     eprintln!("Capture Spec = {:?}", spec);
                     Recording {
@@ -108,7 +107,7 @@ pub mod recorder {
                                 * spec.channels as usize
                         ],
                         pos: 0,
-                        done_sender : done_sender,
+                        done_sender: done_sender,
                         done: false,
                     }
                 })

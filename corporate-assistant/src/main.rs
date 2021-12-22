@@ -7,10 +7,10 @@ use clap::{App, Arg};
 use crate::config::configuration;
 use deepspeech::Model;
 use github_crawler::parse_config;
+use std::cell::RefCell;
 use std::fs::create_dir_all;
 use std::path::Path;
 use std::rc::Rc;
-use std::cell::RefCell;
 use std::{thread, time};
 use tts::*;
 
@@ -71,7 +71,6 @@ fn main() {
         None => (),
     }
 
-
     // either read audio from file or from mic
     let result: String;
     // Record audio to mimic arecord e.g.
@@ -107,7 +106,6 @@ fn main() {
         .expect("Please set project config file");
     let config_file = configuration::CAConfig::new().get_repos_config(project_config_file);
     let (_, jira_config) = parse_config(config_file);
-
 
     // Registration of actions
     let mut intents = corporate_assistant::interpreter::Intents::new();
@@ -160,7 +158,7 @@ fn main() {
                 "create custom action".to_string(),
                 "compose custom action".to_string(),
             ],
-            Rc::new(ca::actions::CreateCustomAction::new(m,rec.clone())),
+            Rc::new(ca::actions::CreateCustomAction::new(m, rec.clone())),
         )
         .expect("Registration failed");
 
