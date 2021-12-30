@@ -1,11 +1,11 @@
 extern crate audrey;
 extern crate clap;
-extern crate deepspeech;
+//extern crate deepspeech;
 
 use clap::{App, Arg};
 
 use crate::config::configuration;
-use deepspeech::Model;
+//use deepspeech::Model;
 use github_crawler::parse_config;
 use std::fs::create_dir_all;
 use std::path::Path;
@@ -61,6 +61,7 @@ fn main() {
 
     let model_path = Path::new(&model_file_path);
     // Load DS model to memory
+    /*
     let mut m = Model::load_from_files(&model_path).unwrap();
     match scorer_file_path {
         Some(s) => {
@@ -69,13 +70,14 @@ fn main() {
         }
         None => (),
     }
-
+*/
     // either read audio from file or from mic
-    let result: String;
+//    let result: String;
     // Record audio to mimic arecord e.g.
     // arecord -r 16000 -f S16_LE $filename.wav
     // if only utterance is completed
     let mut tts = TTS::default().expect("Problem starting TTS engine");
+
     let rec = Recorder::new();
     tts.speak("I'm listening", true)
         .expect("Problem with utterance");
@@ -85,7 +87,9 @@ fn main() {
     let canceling_pause = time::Duration::from_millis(400);
     thread::sleep(canceling_pause);
     let (recorded_vec, channels, freq) = rec.record().expect("Problem with recording audio");
-    result = m.speech_to_text(&recorded_vec).unwrap();
+//    result = m.speech_to_text(&recorded_vec).unwrap();
+
+    let result = "Create a monthly status report".to_string();
     // Output the result
     eprintln!("Transcription:");
     println!("{}", result);

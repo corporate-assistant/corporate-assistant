@@ -13,19 +13,15 @@ pub struct Email {
     email: lettre_email::Email,
 }
 
-pub struct Client {
-    login: String,
-    password: String,
-    server: String,
+pub struct EmailServer {
+    addr: String,
     port: u16,
 }
 
-impl Client {
-    pub fn new(login: &str, password: &str, server: &str, port: u16) -> Client {
-        Client {
-            login: login.to_string(),
-            password: password.to_string(),
-            server: server.to_string(),
+impl EmailServer {
+    pub fn new(server: &str, port: u16) -> EmailServer {
+        EmailServer {
+            addr: server.to_string(),
             port: port,
         }
     }
@@ -44,17 +40,17 @@ impl Email {
         Email { email: email }
     }
 
-    pub fn send(&self, client: &Client) {
+    pub fn send(&self, login: &str, password: &str, server: &EmailServer) {
         let mut tls_builder = TlsConnector::builder();
 
         tls_builder.min_protocol_version(Some(Protocol::Tlsv12));
         let tls_parameters =
-            ClientTlsParameters::new(client.server.clone(), tls_builder.build().unwrap());
+            ClientTlsParameters::new(server.addr.clone(), tls_builder.build().unwrap());
 
-        let smtp_credentials = Credentials::new(client.login.clone(), client.password.clone());
+        let smtp_credentials = Credentials::new(login.to_string().clone(), password.to_string().clone());
 
         let mut mailer = SmtpClient::new(
-            (client.server.clone(), client.port),
+            (server.addr.clone(), server.port),
             ClientSecurity::Required(tls_parameters),
         )
         .unwrap()

@@ -2,7 +2,7 @@ pub mod actions {
     use crate::configuration;
     use corporate_assistant::interpreter::CorporateAction;
     pub use github_crawler::{get_contributions, parse_config, Conf, Contrib, RepoContribs};
-    pub use mailer::{Client, Email};
+    pub use mailer::{EmailServer, Email};
     use serde::Deserialize;
     use std::io::prelude::*;
     use toml;
@@ -103,11 +103,10 @@ pub mod actions {
         }
 
         fn send_email(config: &EmailConfig, subject_line: &String, text: &String) {
-            let client = Client::new(&config.login, &config.password, &config.server, config.port);
-
+            let server = EmailServer::new(&config.server, config.port);
             let email = Email::new(&config.from, &config.to, &subject_line, &text);
-
-            email.send(&client);
+            
+            email.send(config.login, config.password, &server);
         }
 
         fn send_msr_email(repo_contribs: &RepoContribs) -> () {
