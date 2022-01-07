@@ -134,6 +134,7 @@ pub mod jira {
         jira_url: String,
         proxy: Option<Vec<String>>,
         project: String,
+        epics: Option<Vec<Vec<String>>>,
     }
 
     impl JIRA {
@@ -142,12 +143,14 @@ pub mod jira {
             jira_url: String,
             proxy: Option<Vec<String>>,
             project: String,
+            epics: Option<Vec<Vec<String>>>,
         ) -> Self {
             JIRA {
                 user: user,
                 jira_url: jira_url,
                 proxy: proxy,
                 project: project,
+                epics: epics,
             }
         }
 
@@ -173,18 +176,23 @@ pub mod jira {
             let _frame = Frame::default()
                 .with_size(0, 50)
                 .with_label("Epics to link to:");
-            let epics = vec![
-                "PADDLEQ-1575",
-                "PADDLEQ-1249",
-                "PADDLEQ-1259",
-                "PADDLEQ-1254",
-            ]; // TODO(do something with it)
 
             let mut epics_list = Choice::new(0, 0, 0, 30, "");
-            epics_list.add_choice(epics[0]); //fp32
-            epics_list.add_choice(epics[1]); //bf16
-            epics_list.add_choice(epics[2]); //int8
-            epics_list.add_choice(epics[3]); //validation
+            match &self.epics {
+                Some(epic_descs) => {
+                    epic_descs.iter().for_each(|x| {
+                        if x.len() == 2 {
+                            epics_list.add_choice(&(x[0].clone() + " (" + &x[1] + ")"));
+                        } else if x.len() == 1 {
+                            epics_list.add_choice(&(x[0].clone()));
+                        } else {
+                            eprintln!("Error in project file of epics declaration");
+                            panic!();
+                        }
+                    });
+                }
+                _ => {}
+            };
 
             // Issue description
             let _frame = Frame::default()
@@ -222,7 +230,11 @@ pub mod jira {
                                     -1 => None,
                                     _ => {
                                         println!("chosen IDX: {}", epics_list.value());
-                                        Some(epics[epics_list.value() as usize].to_string())
+                                        Some(
+                                            self.epics.as_ref().unwrap()
+                                                [epics_list.value() as usize][0]
+                                                .to_string(),
+                                        )
                                     }
                                 },
                             ));
@@ -482,6 +494,7 @@ pub mod jira {
                 actual_config.url,
                 org_info.proxy,
                 actual_config.project,
+                actual_config.epics,
             )
             .run(&mut tts);
             Ok(())
