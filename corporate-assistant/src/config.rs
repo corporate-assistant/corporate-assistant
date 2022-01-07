@@ -95,6 +95,7 @@ pub mod configuration {
                 user = \"<username to JIRA>\"
                 project = \"PADDLEQ\"
                 url = [\"<URL of JIRA server>\"]
+                epics = [[\"<JIRA epic>\",\"JIRA epic descrition\",..]
                 ";
                 let mut file = File::create(config_name).expect(&format!(
                     "Unable to create default repos config: {}",

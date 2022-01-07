@@ -15,6 +15,7 @@ pub struct GithubConfig {
 pub struct JIRAConfig {
     pub user: String,
     pub project: String,
+    pub epics: Option<Vec<Vec<String>>>,
     pub url: String,
 }
 

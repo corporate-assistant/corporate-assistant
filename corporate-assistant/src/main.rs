@@ -123,6 +123,7 @@ fn main() {
                         jira.url,
                         org_info.proxy,
                         jira.project,
+                        jira.epics,
                     )),
                 )
                 .expect("Registration failed");
