@@ -1,5 +1,6 @@
 pub mod jira {
     use corporate_assistant::interpreter::CorporateAction;
+    use err_handling::ResultExt;
     use fltk::{
         app, button::Button, frame::Frame, input::SecretInput, menu::Choice, prelude::*,
         text::TextBuffer, text::TextEditor, window::Window,
@@ -19,7 +20,7 @@ pub mod jira {
                 block_on(self.submit(tts, &self.user, &pass, &title, &desc, epic));
             } else {
                 tts.speak("Invalid password", true)
-                    .expect("Invalid password");
+                    .expect_and_log("Invalid password");
             }
         }
     }
@@ -262,15 +263,19 @@ pub mod jira {
             // If there is proxy then pick first URL
             let client = match &self.proxy {
                 Some(org_proxies) => reqwest::Client::builder()
-                    .proxy(reqwest::Proxy::http(&org_proxies[0]).expect("Error setting HTTP proxy"))
                     .proxy(
-                        reqwest::Proxy::https(&org_proxies[0]).expect("Error setting HTTPS proxy"),
+                        reqwest::Proxy::http(&org_proxies[0])
+                            .expect_and_log("Error setting HTTP proxy"),
+                    )
+                    .proxy(
+                        reqwest::Proxy::https(&org_proxies[0])
+                            .expect_and_log("Error setting HTTPS proxy"),
                     )
                     .build()
-                    .expect("Could not create REST API client"),
+                    .expect_and_log("Could not create REST API client"),
                 None => reqwest::Client::builder()
                     .build()
-                    .expect("Could not create REST API client"),
+                    .expect_and_log("Could not create REST API client"),
             };
 
             // Get Current Sprint if any
@@ -304,16 +309,16 @@ pub mod jira {
                 .get(&(self.jira_url.clone() + "/rest/api/2/field"))
                 .basic_auth(&login, Some(&pass)) // Get password
                 .send();
-            let mut actual_body = body.expect("GET to get JIRA board failed");
+            let mut actual_body = body.expect_and_log("GET to get JIRA board failed");
             if actual_body.status().is_success() == false {
-                eprintln!("Error getting Response from JIRA");
+                log::error!("Error getting Response from JIRA");
                 panic!();
             }
 
             // println!("Fields: {}", actual_body.text().unwrap());
             let custom_fields = actual_body
                 .json::<Vec<CustomFieldDesc>>()
-                .expect("Error converting response to JSON");
+                .expect_and_log("Error converting response to JSON");
             //println!("fields = {:#?}", custom_fields);
 
             let mut epic_custom_link_iter = custom_fields.iter().filter(|x| x.name == "Epic Link");
@@ -340,9 +345,9 @@ pub mod jira {
                 )
                 .basic_auth(&login, Some(&pass)) // Get password
                 .send();
-            let mut actual_body = body.expect("GET to get JIRA board failed");
+            let mut actual_body = body.expect_and_log("GET to get JIRA board failed");
             if actual_body.status().is_success() == false {
-                eprintln!("Error getting Response from JIRA");
+                log::error!("Error getting Response from JIRA");
                 panic!();
             }
 
@@ -350,7 +355,7 @@ pub mod jira {
             let sprints: JIRAResponse<SprintSpec>;
             let boards = actual_body
                 .json::<JIRAResponse<BoardSpec>>()
-                .expect("Error converting response to JSON");
+                .expect_and_log("Error converting response to JSON");
             println!("body = {:#?}", boards);
             // Pick first returned value as most recent board
             if boards.values.len() > 0 {
@@ -359,18 +364,18 @@ pub mod jira {
                     .get(&((&boards.values[0].self_).to_string() + "/sprint?state=active"))
                     .basic_auth(&login, Some(&pass)) // Get password
                     .send();
-                let mut actual_body = body.expect("GET to get JIRA current sprint failed");
+                let mut actual_body = body.expect_and_log("GET to get JIRA current sprint failed");
                 if actual_body.status().is_success() {
                     sprints = actual_body
                         .json::<JIRAResponse<SprintSpec>>()
-                        .expect("Error converting response to JSON");
+                        .expect_and_log("Error converting response to JSON");
                     println!("body of sprints = {:#?}", sprints);
                     Some(Sprint {
                         name: sprints.values[0].name.clone(),
                         url: sprints.values[0].self_.clone(),
                     })
                 } else {
-                    eprintln!("Error getting Response from JIRA for current sprint getting");
+                    log::error!("Error getting Response from JIRA for current sprint getting");
                     None
                 }
             } else {
@@ -417,11 +422,11 @@ pub mod jira {
                 }
             };
 
-            let mut actual_response = res.expect("Error sending JIRA request");
+            let mut actual_response = res.expect_and_log("Error sending JIRA request");
             if actual_response.status().is_success() {
                 let added_task = actual_response
                     .json::<JIRATaskSubmitted>()
-                    .expect("Error converting response to JSON");
+                    .expect_and_log("Error converting response to JSON");
                 println!("JIRA task submitted: {:#?}", added_task);
                 // Send added JIRA task to sprint
                 match curr_sprint {
@@ -434,7 +439,7 @@ pub mod jira {
                             .json(&sprint_issues)
                             .send();
                         let mut actual_response =
-                            res.expect("Error sending JIRA request to add task to Sprint");
+                            res.expect_and_log("Error sending JIRA request to add task to Sprint");
                         if actual_response.status().is_success() {
                             let feedback = format!(
                                 "{} submitted to Sprint {} in JIRA",
@@ -450,7 +455,7 @@ pub mod jira {
                             );
                             let error_body = actual_response
                                 .text()
-                                .expect("Error converting response to Text");
+                                .expect_and_log("Error converting response to Text");
                             eprintln!("error_body = {:#?}", error_body);
                         }
                     }
@@ -465,7 +470,7 @@ pub mod jira {
                 );
                 let error_body = actual_response
                     .text()
-                    .expect("Error converting response to Text");
+                    .expect_and_log("Error converting response to Text");
                 eprintln!("error_body = {:#?}", error_body);
                 todo!();
             }

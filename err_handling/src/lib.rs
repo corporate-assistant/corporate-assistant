@@ -15,6 +15,8 @@ impl<T, E: fmt::Debug> ResultExt<T, E> for Result<T, E> {
     }
 }
 
+// TODO(jczaja) Make ResultExt for Option
+
 pub fn init_logging_infrastructure() {
     // TODO(jczaja): test on windows/macos
     syslog::init(

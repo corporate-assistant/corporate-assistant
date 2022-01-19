@@ -3,6 +3,7 @@ extern crate wav;
 
 pub mod recorder {
     use chrono::{DateTime, Utc};
+    use err_handling::ResultExt;
     use rand::{distributions::Alphanumeric, Rng};
     use sdl2::audio::{AudioCallback, AudioSpecDesired};
     use std::fs;
@@ -62,7 +63,7 @@ pub mod recorder {
                     self.done = true;
                     self.done_sender
                         .send(self.record_buffer.clone())
-                        .expect("could not send record buffer");
+                        .expect_and_log("could not send record buffer");
                     break;
                 }
             }
@@ -71,7 +72,7 @@ pub mod recorder {
 
     impl Recorder {
         pub fn new() -> Self {
-            let sdl_context = sdl2::init().expect("SDL2 initialization failed");
+            let sdl_context = sdl2::init().expect_and_log("SDL2 initialization failed");
             let audio_subsystem = sdl_context.audio().unwrap();
 
             let desired_spec = AudioSpecDesired {
@@ -111,7 +112,7 @@ pub mod recorder {
                         done: false,
                     }
                 })
-                .expect("Error: Cannot Open capture device");
+                .expect_and_log("Error: Cannot Open capture device");
 
             eprintln!(
                 "AudioDriver: {:?}",
@@ -188,10 +189,11 @@ pub mod recorder {
                     .to_str()
                     .expect("Cannot print path to save wav to!")
             );
-            let mut out_file = File::create(file_name.as_path()).expect("Unable to open file");
+            let mut out_file =
+                File::create(file_name.as_path()).expect_and_log("Unable to open file");
             let header = wav::Header::new(1, channels, freq, 16);
             let bit_depth = wav::BitDepth::Sixteen(recorded_vec.clone());
-            wav::write(header, &bit_depth, &mut out_file).expect("Problem writting data");
+            wav::write(header, &bit_depth, &mut out_file).expect_and_log("Problem writting data");
 
             Ok(basename)
         }
@@ -262,10 +264,10 @@ pub mod recorder {
 
             let basename = self
                 .save_wav(None, channels, freq, &recorded_vec)
-                .expect("Saving Wav did not quite succeeded");
+                .expect_and_log("Saving Wav did not quite succeeded");
 
             self.add_wav_to_database(database_name, None, &basename, text)
-                .expect("Writing recorded audio info to database failed");
+                .expect_and_log("Writing recorded audio info to database failed");
 
             Ok(())
         }
@@ -284,9 +286,9 @@ pub mod recorder {
 
             let basename = self
                 .save_wav(Some(unrecognized_dir), channels, freq, &recorded_vec)
-                .expect("Saving Wav did not quite succeeded");
+                .expect_and_log("Saving Wav did not quite succeeded");
             self.add_wav_to_database(&database_name, Some(unrecognized_dir), &basename, text)
-                .expect("Writing recorded audio info to database failed");
+                .expect_and_log("Writing recorded audio info to database failed");
 
             Ok(())
         }
@@ -309,7 +311,7 @@ pub mod recorder {
                         pos: 0,
                     }
                 })
-                .expect("Error opening playback");
+                .expect_and_log("Error opening playback");
 
             // Start playback
             playback_device.resume();

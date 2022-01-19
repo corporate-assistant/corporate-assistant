@@ -1,5 +1,6 @@
 pub mod configuration {
     use dirs::home_dir;
+    use err_handling::ResultExt;
     use serde::Deserialize;
     use std::fs::create_dir;
     use std::fs::File;
@@ -33,13 +34,16 @@ pub mod configuration {
                     config_dir.push(".corporate_assistant");
 
                     if config_dir.exists() != true {
-                        create_dir(&config_dir).expect(&format!(
+                        create_dir(&config_dir).expect_and_log(&format!(
                             "Unable to create directory: {}",
                             config_dir.to_str().unwrap()
                         ));
                     }
                 }
-                None => panic!("Error: home directory not found!"),
+                None => {
+                    log::error!("Error: home directory not found!");
+                    panic!()
+                }
             }
             Self {
                 config_dir: config_dir,
@@ -68,12 +72,12 @@ pub mod configuration {
                      script = "gnome-terminal -- tmux"
                     "#
                 };
-                let mut file = File::create(config_name).expect(&format!(
+                let mut file = File::create(config_name).expect_and_log(&format!(
                     "Unable to create default custom action config: {}",
                     config_name.to_str().unwrap()
                 ));
                 file.write_all(default_content.as_bytes())
-                    .expect("Failure in writting custom script");
+                    .expect_and_log("Failure in writting custom script");
             }
             config_name.to_path_buf()
         }
@@ -97,12 +101,12 @@ pub mod configuration {
                 url = [\"<URL of JIRA server>\"]
                 epics = [[\"<JIRA epic>\",\"JIRA epic descrition\",..]
                 ";
-                let mut file = File::create(config_name).expect(&format!(
+                let mut file = File::create(config_name).expect_and_log(&format!(
                     "Unable to create default repos config: {}",
                     config_name.to_str().unwrap()
                 ));
                 file.write_all(default_content.as_bytes())
-                    .expect("Failure in writting custom script");
+                    .expect_and_log("Failure in writting custom script");
             }
             config_name.to_path_buf()
         }
@@ -120,12 +124,12 @@ pub mod configuration {
                 holidays = [\"<URL to website with holidays request form>\"]
                 proxy = [\"<URL of proxy servers>\"]
                 ";
-                let mut file = File::create(config_name).expect(&format!(
+                let mut file = File::create(config_name).expect_and_log(&format!(
                     "Unable to create default repos config: {}",
                     config_name.to_str().unwrap()
                 ));
                 file.write_all(default_content.as_bytes())
-                    .expect("Failure in writting custom script");
+                    .expect_and_log("Failure in writting custom script");
             }
             config_name.to_path_buf()
         }
@@ -146,13 +150,13 @@ pub mod configuration {
                     to = \"<receiver>\"
                 ";
 
-                let mut file = File::create(config_name).expect(&format!(
+                let mut file = File::create(config_name).expect_and_log(&format!(
                     "Unable to create default email client config: {}",
                     config_name.to_str().unwrap()
                 ));
 
                 file.write_all(default_content.as_bytes())
-                    .expect("Failure saving email client config file");
+                    .expect_and_log("Failure saving email client config file");
             }
 
             config_name.to_path_buf()
@@ -160,12 +164,12 @@ pub mod configuration {
     }
 
     pub fn parse_organization_config(config_name: &PathBuf) -> OrganizationConfig {
-        let mut file = File::open(config_name).expect(&format!(
+        let mut file = File::open(config_name).expect_and_log(&format!(
             "Error opening organization config {}\n",
             config_name.display()
         ));
         let mut contents = String::new();
-        file.read_to_string(&mut contents).expect(&format!(
+        file.read_to_string(&mut contents).expect_and_log(&format!(
             "Error reading organization config {}\n",
             config_name.display()
         ));
