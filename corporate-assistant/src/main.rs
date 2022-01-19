@@ -6,8 +6,8 @@ use clap::{App, Arg};
 
 use crate::config::configuration;
 use deepspeech::Model;
+use err_handling::{init_logging_infrastructure, ResultExt};
 use github_crawler::parse_config;
-use err_handling::{init_logging_infrastructure,ResultExt};
 use std::cell::RefCell;
 use std::fs::create_dir_all;
 use std::path::Path;
@@ -24,7 +24,6 @@ mod msr; // Need this to know there is separate module in this project // Need t
 mod webbrowser;
 
 fn main() {
-
     init_logging_infrastructure();
     log::info!("Corporate-assistant started!");
 
@@ -75,7 +74,8 @@ fn main() {
         Some(s) => {
             let scorer_path = Path::new(&s);
             m.borrow_mut()
-                .enable_external_scorer(&scorer_path).expect_and_log(&format!("Error loading scorer: {}", s));
+                .enable_external_scorer(&scorer_path)
+                .expect_and_log(&format!("Error loading scorer: {}", s));
             log::info!("Scorer {} loaded", s);
         }
         None => (),
@@ -96,9 +96,13 @@ fn main() {
     //.. yet we need to wait so that recorder did not pick up still hearable sound
     let canceling_pause = time::Duration::from_millis(400);
     thread::sleep(canceling_pause);
-    let (recorded_vec, channels, freq) = rec.record().expect_and_log("Problem with recording audio");
+    let (recorded_vec, channels, freq) =
+        rec.record().expect_and_log("Problem with recording audio");
 
-    result = m.borrow_mut().speech_to_text(&recorded_vec).expect_and_log("Speech to text failed");
+    result = m
+        .borrow_mut()
+        .speech_to_text(&recorded_vec)
+        .expect_and_log("Speech to text failed");
     // Output the result
     log::info!("Transcription: {}", result);
 
@@ -106,14 +110,24 @@ fn main() {
     let err_msg = "Please set organization config file";
     let organization_config_file = configuration::CAConfig::new().get_organization_config(
         matches
-            .value_of("organization").map(|x| { log::error!("{}", err_msg);x }).expect(err_msg),
+            .value_of("organization")
+            .map(|x| {
+                log::error!("{}", err_msg);
+                x
+            })
+            .expect(err_msg),
     );
 
     let org_info = configuration::parse_organization_config(&organization_config_file);
     // Project info
     let err_msg = "Please set project config file";
     let project_config_file = matches
-        .value_of("project").map(|x| { log::error!("{}", err_msg);x }).expect(err_msg);
+        .value_of("project")
+        .map(|x| {
+            log::error!("{}", err_msg);
+            x
+        })
+        .expect(err_msg);
     let config_file = configuration::CAConfig::new().get_repos_config(project_config_file);
     let (_, jira_config) = parse_config(config_file);
 
@@ -153,7 +167,7 @@ fn main() {
             Rc::new(msr::actions::MSR::new(project_config_file, 4)),
         )
         .expect_and_log("Registration of MSR module failed");
-        log::info!("MSR module registered");
+    log::info!("MSR module registered");
     intents
         .register_action(
             vec![
@@ -165,7 +179,7 @@ fn main() {
             Rc::new(msr::actions::MSR::new(project_config_file, 1)),
         )
         .expect_and_log("Registration of MSR module failed");
-        log::info!("MSR module registered");
+    log::info!("MSR module registered");
     intents
         .register_action(
             vec![
@@ -175,7 +189,7 @@ fn main() {
             Rc::new(ca::actions::CreateCustomAction::new(m, rec.clone())),
         )
         .expect_and_log("Registration of CCA module failed");
-        log::info!("CCA module registered");
+    log::info!("CCA module registered");
 
     match org_info.restaurants {
         Some(i) => {
@@ -195,7 +209,7 @@ fn main() {
                     )),
                 )
                 .expect_and_log("Registration of Lunch Menus module failed");
-                log::info!("Lunch menu module registered");
+            log::info!("Lunch menu module registered");
         }
         None => (),
     }
@@ -219,7 +233,7 @@ fn main() {
                     )),
                 )
                 .expect_and_log("Registration of holidays module failed");
-                log::info!("holidays module registered");
+            log::info!("holidays module registered");
         }
         None => (),
     }
@@ -240,7 +254,7 @@ fn main() {
                     )),
                 )
                 .expect_and_log("Registration of Recognition module failed");
-                log::info!("Recognition module registered");
+            log::info!("Recognition module registered");
         }
         None => (),
     }
