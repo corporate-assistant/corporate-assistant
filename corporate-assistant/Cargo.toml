@@ -11,6 +11,7 @@ audrey = "0.3.0"
 deepspeech = "0.9.0"
 clap = "~2.27.0"
 record = { path = "../record" }
+err_handling = { path = "../err_handling" }
 github-crawler = { path = "../github-crawler" }
 custom_action = { path = "../custom_action" }
 mailer = { path = "../mailer" }
@@ -23,3 +24,5 @@ toml = "0.5.7"
 serde = "^1.0"
 reqwest = "^0.9"
 futures = "0.3"
+syslog = "6.0.1"
+log = "0.4.0"
