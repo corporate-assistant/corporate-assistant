@@ -108,26 +108,13 @@ fn main() {
 
     // Origanization/site info
     let err_msg = "Please set organization config file";
-    let organization_config_file = configuration::CAConfig::new().get_organization_config(
-        matches
-            .value_of("organization")
-            .map(|x| {
-                log::error!("{}", err_msg);
-                x
-            })
-            .expect(err_msg),
-    );
+    let organization_config_file = configuration::CAConfig::new()
+        .get_organization_config(matches.value_of("organization").expect(err_msg));
 
     let org_info = configuration::parse_organization_config(&organization_config_file);
     // Project info
     let err_msg = "Please set project config file";
-    let project_config_file = matches
-        .value_of("project")
-        .map(|x| {
-            log::error!("{}", err_msg);
-            x
-        })
-        .expect(err_msg);
+    let project_config_file = matches.value_of("project").expect(err_msg);
     let config_file = configuration::CAConfig::new().get_repos_config(project_config_file);
     let (_, jira_config) = parse_config(config_file);
 
