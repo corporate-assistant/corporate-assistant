@@ -1,4 +1,5 @@
 use chrono;
+use err_handling::ResultExt;
 use graphql_client::*;
 use std::collections::HashMap;
 use std::env;
@@ -224,9 +225,10 @@ pub fn get_contributions(conf: Conf, config: config_parser::GithubConfig) -> Rep
         .bearer_auth(&github_api_token)
         .json(&q)
         .send()
-        .expect("Sender error");
+        .expect_and_log("Sender error");
 
-    let response_body: Response<user_pr_view::ResponseData> = res.json().expect("Response error");
+    let response_body: Response<user_pr_view::ResponseData> =
+        res.json().expect_and_log("Response error");
 
     let (mut end_cursor, mut contribs) = get_repo_contribs(
         &response_body.data.expect("missing response data"),
@@ -246,10 +248,10 @@ pub fn get_contributions(conf: Conf, config: config_parser::GithubConfig) -> Rep
             .bearer_auth(&github_api_token)
             .json(&q)
             .send()
-            .expect("Yet another sending error");
+            .expect_and_log("Yet another sending error");
 
         let response_body: Response<user_pr_view_next::ResponseData> =
-            res.json().expect("Yet another response error");
+            res.json().expect_and_log("Yet another response error");
         let (after_cursor, next_contribs) = get_repo_contribs_next(
             &response_body.data.expect("missing response data"),
             &config.repos,

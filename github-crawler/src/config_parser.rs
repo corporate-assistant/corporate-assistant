@@ -1,3 +1,4 @@
+use err_handling::ResultExt;
 use serde::Deserialize;
 use std::io::prelude::*;
 use std::path::PathBuf;
@@ -27,7 +28,7 @@ struct RepoConfig {
 
 pub fn parse_config(path: PathBuf) -> (Option<GithubConfig>, Option<JIRAConfig>) {
     let file = std::fs::File::open(path);
-    let mut reader = std::io::BufReader::new(file.expect("Cannot open file"));
+    let mut reader = std::io::BufReader::new(file.expect_and_log("Cannot open file"));
 
     let mut c: String = "".to_string();
 

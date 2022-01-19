@@ -2,6 +2,7 @@
 //   we put this script there
 // 2. Upon finishing to edit Save a script
 
+use err_handling::ResultExt;
 use record::recorder::Recorder;
 use serde::Deserialize;
 use std::cell::RefCell;
@@ -307,8 +308,10 @@ impl MyApp {
                         app::add_timeout(3 as f64, move || {
                             recording_s.send(Message::RecordingStop);
                         });
-                        let (recorded_vec, channels, freq) =
-                            self.rec.record().expect("Problem with recording audio");
+                        let (recorded_vec, channels, freq) = self
+                            .rec
+                            .record()
+                            .expect_and_log("Problem with recording audio");
                         let result = self.m.borrow_mut().speech_to_text(&recorded_vec).unwrap();
                         self.te.buffer().unwrap().set_text(&result);
                         // Output the result
@@ -356,10 +359,10 @@ pub fn action_creator(
 }
 
 fn load_script(script_name: &PathBuf) -> String {
-    let mut file = File::open(script_name).expect("Error opening script");
+    let mut file = File::open(script_name).expect_and_log("Error opening script");
     let mut contents = String::new();
     file.read_to_string(&mut contents)
-        .expect("Error reading script file");
+        .expect_and_log("Error reading script file");
     contents
 }
 
@@ -369,16 +372,16 @@ pub fn action_executor(script: &str) -> bool {
         Command::new("cmd")
             .args(&["/C", "echo hello"])
             .output()
-            .expect("failed to execute process")
+            .expect_and_log("failed to execute process")
     } else {
         Command::new("bash")
             .arg("-c")
             .arg(script)
             .output()
-            .expect("failed to execute process")
+            .expect_and_log("failed to execute process")
     };
     let stdout = output.stdout;
-    println!("out: {}", String::from_utf8(stdout).unwrap());
+    log::info!("out: {}", String::from_utf8(stdout).unwrap());
     output.status.success()
 }
 
@@ -399,7 +402,7 @@ pub fn parse_config(path: PathBuf) -> CustomActions {
 
     let mut c: String = "".to_string();
     reader.read_to_string(&mut c);
-    toml::from_str(&c).expect("Error: Parsing of custom actions config")
+    toml::from_str(&c).expect_and_log("Error: Parsing of custom actions config")
 }
 
 #[cfg(test)]

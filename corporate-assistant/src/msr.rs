@@ -1,6 +1,7 @@
 pub mod actions {
     use crate::configuration;
     use corporate_assistant::interpreter::CorporateAction;
+    use err_handling::ResultExt;
     pub use github_crawler::{get_contributions, parse_config, Conf, Contrib, RepoContribs};
     pub use mailer::{Client, Email};
     use serde::Deserialize;
@@ -91,7 +92,7 @@ pub mod actions {
 
         fn parse_config_file(email_config_file: std::path::PathBuf) -> EmailConfig {
             let file = std::fs::File::open(email_config_file);
-            let mut reader = std::io::BufReader::new(file.expect("Cannot open file"));
+            let mut reader = std::io::BufReader::new(file.expect_and_log("Cannot open file"));
 
             let mut c: String = "".to_string();
             reader.read_to_string(&mut c);

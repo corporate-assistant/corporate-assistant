@@ -12,3 +12,5 @@ sdl2 = "0.34.0"
 rand = "0.6.0"
 chrono = "0.4.19"
 structopt = "0.2.18"
+err_handling = { path = "../err_handling" }
+log = "^0.4"
