@@ -27,23 +27,14 @@ pub mod configuration {
             // Check if directory exists
             // and create if needed
             let mut config_dir: PathBuf;
-            let hd = home_dir();
-            match hd {
-                Some(hd) => {
-                    config_dir = hd.clone();
-                    config_dir.push(".corporate_assistant");
-
-                    if config_dir.exists() != true {
-                        create_dir(&config_dir).expect_and_log(&format!(
-                            "Unable to create directory: {}",
-                            config_dir.to_str().unwrap()
-                        ));
-                    }
-                }
-                None => {
-                    log::error!("Error: home directory not found!");
-                    panic!()
-                }
+            let hd = home_dir().expect_and_log("Error: home directory not found!");
+            config_dir = hd.clone();
+            config_dir.push(".corporate_assistant");
+            if config_dir.exists() != true {
+                create_dir(&config_dir).expect_and_log(&format!(
+                    "Unable to create directory: {}",
+                    config_dir.to_str().unwrap()
+                ));
             }
             Self {
                 config_dir: config_dir,

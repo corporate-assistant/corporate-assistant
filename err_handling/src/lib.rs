@@ -1,11 +1,11 @@
 use std::fmt;
 
 // Let's extend Result with logging
-pub trait ResultExt<T, E> {
+pub trait ResultExt<T> {
     fn expect_and_log(self, msg: &str) -> T;
 }
 
-impl<T, E: fmt::Debug> ResultExt<T, E> for Result<T, E> {
+impl<T, E: fmt::Debug> ResultExt<T> for Result<T, E> {
     fn expect_and_log(self, err_msg: &str) -> T {
         self.map_err(|e| {
             log::error!("{}", err_msg);
@@ -15,7 +15,15 @@ impl<T, E: fmt::Debug> ResultExt<T, E> for Result<T, E> {
     }
 }
 
-// TODO(jczaja) Make ResultExt for Option
+impl<T> ResultExt<T> for Option<T> {
+    fn expect_and_log(self, err_msg: &str) -> T {
+        self.or_else(|| {
+            log::error!("{}", err_msg);
+            None
+        })
+        .expect(err_msg)
+    }
+}
 
 pub fn init_logging_infrastructure() {
     // TODO(jczaja): test on windows/macos
