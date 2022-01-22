@@ -61,14 +61,7 @@ fn main() {
         )
         .get_matches();
 
-    let model_file_path = match matches.value_of("model") {
-        Some(value) => value,
-        None => {
-            log::error!("Set model file");
-            panic!();
-        }
-    };
-
+    let model_file_path = matches.value_of("model").expect_and_log("Set model file");
     let scorer_file_path = matches.value_of("scorer");
 
     let model_path = Path::new(&model_file_path);
@@ -114,25 +107,17 @@ fn main() {
     log::info!("Transcription: {}", result);
 
     // Origanization/site info
-    let path = match matches.value_of("organization") {
-        Some(value) => value,
-        None => {
-            log::error!("Please set organization config file");
-            panic!();
-        }
-    };
+    let path = matches
+        .value_of("organization")
+        .expect_and_log("Please set organization config file");
 
     let organization_config_file = configuration::CAConfig::new().get_organization_config(path);
 
     let org_info = configuration::parse_organization_config(&organization_config_file);
     // Project info
-    let project_config_file = match matches.value_of("project") {
-        Some(value) => value,
-        None => {
-            log::error!("Please set project config file");
-            panic!();
-        }
-    };
+    let project_config_file = matches
+        .value_of("project")
+        .expect_and_log("Please set project config file");
 
     let config_file = configuration::CAConfig::new().get_repos_config(project_config_file);
     let (_, jira_config) = parse_config(config_file);
