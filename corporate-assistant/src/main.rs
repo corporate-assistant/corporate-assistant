@@ -105,11 +105,14 @@ fn main() {
     thread::sleep(canceling_pause);
     let (recorded_vec, channels, freq) =
         rec.record().expect_and_log("Problem with recording audio");
-
+/*
     result = m
         .borrow_mut()
         .speech_to_text(&recorded_vec)
         .expect_and_log("Speech to text failed");
+*/
+    let result = "create my monthly status report".to_string();
+    println!("Result {}", result);
     // Output the result
     log::info!("Transcription: {}", result);
 

@@ -86,7 +86,6 @@ pub mod actions {
 
         fn print_text(repo_contribs: &RepoContribs) -> () {
             let text = MSR::compose_contrib_text(repo_contribs);
-            println!("{}", text);
             ()
         }
 
@@ -97,7 +96,6 @@ pub mod actions {
             let mut c: String = "".to_string();
             reader.read_to_string(&mut c);
 
-            println!("{}", c);
             let email_config: EmailConfigOpt = toml::from_str(&c).unwrap();
 
             email_config.email.unwrap()
