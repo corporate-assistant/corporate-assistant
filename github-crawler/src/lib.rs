@@ -53,28 +53,25 @@ fn behind_proxy() -> Result<bool, String> {
     }
 }
 
-fn build_client(behind_proxy: bool) -> reqwest::Client {
-    if behind_proxy {
-        let proxy = reqwest::Proxy::https("http://proxy-chain.intel.com:912").unwrap();
-        reqwest::Client::builder().proxy(proxy).build().unwrap()
-    } else {
-        reqwest::Client::new()
-    }
-
-    /*
-    match behind_proxy {
-        Ok(true) => {
-            let proxy = reqwest::Proxy::https("http://proxy-chain.intel.com:912").unwrap();
-            reqwest::Client::builder().proxy(proxy).build().unwrap()
-        }
-        Ok(false) => {
-            reqwest::Client::new()
-        }
-        Err(error_str) => {
-            panic!(error_str)
-        }
-    }
-    */
+fn build_client(behind_proxy: bool, token: &str) -> reqwest::blocking::Client {
+    reqwest::blocking::Client::builder()
+        .user_agent("request")
+        .default_headers(
+            std::iter::once((
+                reqwest::header::AUTHORIZATION,
+                reqwest::header::HeaderValue::from_str(&format!("Bearer {}", token)).unwrap(),
+            ))
+            .collect(),
+        )
+        .proxy(reqwest::Proxy::custom(move |_| {
+            if behind_proxy {
+                Some(reqwest::Url::parse("http://proxy-chain.intel.com:912").unwrap())
+            } else {
+                None
+            }
+        }))
+        .build()
+        .expect("Couldn't build a client")
 }
 
 #[derive(Debug)]
@@ -218,11 +215,10 @@ pub fn get_contributions(conf: Conf, config: config_parser::GithubConfig) -> Rep
         login: github_user.to_string(),
     });
 
-    let client = build_client(behind_proxy);
+    let client = build_client(behind_proxy, &github_api_token);
 
     let mut res = client
         .post(github_url)
-        .bearer_auth(&github_api_token)
         .json(&q)
         .send()
         .expect_and_log("Sender error");
@@ -245,7 +241,6 @@ pub fn get_contributions(conf: Conf, config: config_parser::GithubConfig) -> Rep
 
         let mut res = client
             .post(github_url)
-            .bearer_auth(&github_api_token)
             .json(&q)
             .send()
             .expect_and_log("Yet another sending error");
