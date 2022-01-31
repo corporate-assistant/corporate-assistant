@@ -1,9 +1,11 @@
 pub mod actions {
     use crate::configuration;
+    use chrono::Datelike;
     use corporate_assistant::interpreter::CorporateAction;
     use err_handling::ResultExt;
     pub use github_crawler::{get_contributions, parse_config, Conf, Contrib, RepoContribs};
     pub use mailer::{Client, Email};
+    use num_traits::FromPrimitive;
     use serde::Deserialize;
     use std::io::prelude::*;
     use toml;
@@ -112,16 +114,18 @@ pub mod actions {
         }
 
         fn send_msr_email(repo_contribs: &RepoContribs) -> () {
-            use chrono::Datelike;
-
             let ca_config = configuration::CAConfig::new();
             let email_config = Self::parse_config_file(ca_config.get_mailer_config());
 
             let month = chrono::Utc::now().date().month();
             let year = chrono::Utc::now().date().year();
 
-            let subject_line =
-                "Test MSR ".to_owned() + &month.to_string() + " " + &year.to_string();
+            let subject_line = format!(
+                "Draft of MSR {} {}",
+                chrono::Month::from_u32(month).unwrap().name(),
+                year
+            );
+
             let text = MSR::compose_contrib_text(repo_contribs);
 
             MSR::send_email(&email_config, &subject_line, &text);
