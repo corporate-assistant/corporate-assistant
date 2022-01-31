@@ -25,6 +25,8 @@ pub mod jira {
         }
     }
 
+    type ReqwestClient = reqwest::blocking::Client;
+
     #[derive(Debug, Deserialize, Serialize)]
     struct BoardSpec {
         id: u32,
@@ -262,7 +264,7 @@ pub mod jira {
         ) {
             // If there is proxy then pick first URL
             let client = match &self.proxy {
-                Some(org_proxies) => reqwest::Client::builder()
+                Some(org_proxies) => ReqwestClient::builder()
                     .proxy(
                         reqwest::Proxy::http(&org_proxies[0])
                             .expect_and_log("Error setting HTTP proxy"),
@@ -273,7 +275,7 @@ pub mod jira {
                     )
                     .build()
                     .expect_and_log("Could not create REST API client"),
-                None => reqwest::Client::builder()
+                None => ReqwestClient::builder()
                     .build()
                     .expect_and_log("Could not create REST API client"),
             };
@@ -300,7 +302,7 @@ pub mod jira {
 
         fn get_epics_custom_link(
             &self,
-            client: &reqwest::Client,
+            client: &ReqwestClient,
             login: &str,
             pass: &str,
         ) -> Option<String> {
@@ -331,12 +333,7 @@ pub mod jira {
             }
         }
 
-        fn fetch_sprint(
-            &self,
-            client: &reqwest::Client,
-            login: &str,
-            pass: &str,
-        ) -> Option<Sprint> {
+        fn fetch_sprint(&self, client: &ReqwestClient, login: &str, pass: &str) -> Option<Sprint> {
             let body = client
                 .get(
                     &(self.jira_url.clone()
@@ -386,7 +383,7 @@ pub mod jira {
         fn submit_issue(
             &self,
             tts: &mut tts::TTS,
-            client: &reqwest::Client,
+            client: &ReqwestClient,
             login: &str,
             pass: &str,
             epic_custom_link: Option<String>, // TODO: Use it somewhere
