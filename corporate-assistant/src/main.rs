@@ -103,6 +103,7 @@ fn main() {
         .borrow_mut()
         .speech_to_text(&recorded_vec)
         .expect_and_log("Speech to text failed");
+
     // Output the result
     log::info!("Transcription: {}", result);
 
@@ -136,7 +137,7 @@ fn main() {
                     Rc::new(jira::jira::JIRA::new(
                         jira.user,
                         jira.url,
-                        org_info.proxy,
+                        org_info.proxy.clone(),
                         jira.project,
                         jira.epics,
                     )),
@@ -155,7 +156,11 @@ fn main() {
                 "create my monthly status report".to_string(),
                 "create monthly status report".to_string(),
             ],
-            Rc::new(msr::actions::MSR::new(project_config_file, 4)),
+            Rc::new(msr::actions::MSR::new(
+                &org_info.proxy,
+                project_config_file,
+                4,
+            )),
         )
         .expect_and_log("Registration of MSR module failed");
     log::info!("MSR module registered");
@@ -167,7 +172,11 @@ fn main() {
                 "create my weekly status report".to_string(),
                 "create weekly status report".to_string(),
             ],
-            Rc::new(msr::actions::MSR::new(project_config_file, 1)),
+            Rc::new(msr::actions::MSR::new(
+                &org_info.proxy,
+                project_config_file,
+                1,
+            )),
         )
         .expect_and_log("Registration of MSR module failed");
     log::info!("MSR module registered");

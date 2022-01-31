@@ -53,7 +53,13 @@ fn behind_proxy() -> Result<bool, String> {
     }
 }
 
-fn build_client(behind_proxy: bool, token: &str) -> reqwest::blocking::Client {
+fn build_client(proxies: &Option<Vec<String>>, token: &str) -> reqwest::blocking::Client {
+    let proxy = if let Some(proxies) = proxies {
+        Some(proxies[0].clone())
+    } else {
+        None
+    };
+
     reqwest::blocking::Client::builder()
         .user_agent("request")
         .default_headers(
@@ -63,12 +69,9 @@ fn build_client(behind_proxy: bool, token: &str) -> reqwest::blocking::Client {
             ))
             .collect(),
         )
-        .proxy(reqwest::Proxy::custom(move |_| {
-            if behind_proxy {
-                Some(reqwest::Url::parse("http://proxy-chain.intel.com:912").unwrap())
-            } else {
-                None
-            }
+        .proxy(reqwest::Proxy::custom(move |_| match &proxy {
+            Some(proxy) => Some(reqwest::Url::parse(&proxy).unwrap()),
+            None => None,
         }))
         .build()
         .expect("Couldn't build a client")
@@ -199,7 +202,7 @@ fn get_repo_contribs_next(
 pub struct Conf {
     pub from_date: chrono::DateTime<chrono::Utc>,
     pub to_date: chrono::DateTime<chrono::Utc>,
-    pub behind_proxy: bool,
+    pub proxies: Option<Vec<String>>,
     pub config_file: PathBuf,
 }
 
@@ -208,14 +211,13 @@ pub fn get_contributions(conf: Conf, config: config_parser::GithubConfig) -> Rep
 
     let github_url = &config.url;
     let github_api_token = &config.token;
-
-    let behind_proxy = conf.behind_proxy;
+    let proxies = &conf.proxies;
 
     let q = UserPrView::build_query(user_pr_view::Variables {
         login: github_user.to_string(),
     });
 
-    let client = build_client(behind_proxy, &github_api_token);
+    let client = build_client(&proxies, &github_api_token);
 
     let mut res = client
         .post(github_url)
