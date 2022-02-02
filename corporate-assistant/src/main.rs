@@ -21,6 +21,7 @@ mod config;
 mod jira;
 mod labeling_assistant;
 mod msr; // Need this to know there is separate module in this project // Need this to know there is separate module in this project
+mod skm;
 mod webbrowser;
 
 fn main() {
