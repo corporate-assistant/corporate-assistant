@@ -124,6 +124,7 @@ fn main() {
     let config_file = configuration::CAConfig::new().get_repos_config(project_config_file);
     let (_, jira_config) = parse_config(config_file);
 
+    //TODO(jczaja): Make it an async function to register all of this
     // Registration of actions
     let mut intents = corporate_assistant::interpreter::Intents::new();
     // Register custom actions
@@ -192,6 +193,48 @@ fn main() {
         .expect_and_log("Registration of CCA module failed");
     log::info!("CCA module registered");
 
+    let mut to_from: Vec<String>;
+    match org_info.home_work_train_stations {
+        Some(i) => {
+            intents
+                .register_action(
+                    vec![
+                        "when is the train to work".to_string(),
+                        "when is the train work".to_string(),
+                        "when is the next train to work".to_string(),
+                        "when is the next train work".to_string(),
+                        "when can i go to work".to_string(),
+                        "when does the train to work departs".to_string(),
+                    ],
+                    Rc::new(skm::skm::SKM::new(
+                        "https://skm.trojmiasto.pl/".to_string(),
+                        org_info.proxy.clone(),
+                        i.clone(),
+                    )),
+                )
+                .expect_and_log("Registration of SKM module failed");
+            // for travelling back we need to swap start and destination
+            to_from = i;
+            to_from.reverse();
+            intents
+                .register_action(
+                    vec![
+                        "when is the train home".to_string(),
+                        "when is the next train home".to_string(),
+                        "when can i return home".to_string(),
+                        "when does the train home departs".to_string(),
+                    ],
+                    Rc::new(skm::skm::SKM::new(
+                        "https://skm.trojmiasto.pl/".to_string(),
+                        org_info.proxy.clone(),
+                        to_from,
+                    )),
+                )
+                .expect_and_log("Registration of SKM module failed");
+            log::info!("Next Train module registered");
+        }
+        None => (),
+    }
     match org_info.restaurants {
         Some(i) => {
             intents

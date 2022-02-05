@@ -20,17 +20,15 @@ pub mod skm {
     pub struct SKM {
         skm_url: String,
         proxy: Option<Vec<String>>,
-        from: String,
-        to: String,
+        from_to: Vec<String>,
     }
 
     impl SKM {
-        pub fn new(skm_url: String, proxy: Option<Vec<String>>, from: String, to: String) -> Self {
+        pub fn new(skm_url: String, proxy: Option<Vec<String>>, from_to: Vec<String>) -> Self {
             SKM {
                 skm_url: skm_url,
                 proxy: proxy,
-                from: from,
-                to: to,
+                from_to: from_to,
             }
         }
 
@@ -110,8 +108,8 @@ pub mod skm {
                 .text();
 
             let actual_response = res.await.expect_and_log("Error: unwrapping SKM response");
-            let from = self.get_station_id(&actual_response, &self.from);
-            let to = self.get_station_id(&actual_response, &self.to);
+            let from = self.get_station_id(&actual_response, &self.from_to[0]);
+            let to = self.get_station_id(&actual_response, &self.from_to[1]);
             // Get Data
 
             let from_id = from.await;
@@ -146,7 +144,7 @@ pub mod skm {
                 .expect_and_log("Error sending SKM request")
                 .text();
             let actual_response = res.await.expect_and_log("Error: unwrapping SKM response");
-            let message = self.get_message(&actual_response, &self.from).await;
+            let message = self.get_message(&actual_response, &self.from_to[0]).await;
             log::info!("SKM: uttered message: {}", &message);
             tts.speak(message, true).expect("Problem with utterance");
         }
@@ -172,8 +170,10 @@ pub mod skm {
             let skm = SKM::new(
                 "https://skm.trojmiasto.pl/".to_string(),
                 org_info.proxy,
-                "Gdansk Wrzeszcz".to_string(),
-                "Gdansk Port Lotniczy".to_string(),
+                vec![
+                    "Gdansk Wrzeszcz".to_string(),
+                    "Gdansk Port Lotniczy".to_string(),
+                ],
             )
             .run(&mut tts);
             Ok(())

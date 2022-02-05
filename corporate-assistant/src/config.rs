@@ -20,6 +20,7 @@ pub mod configuration {
         pub holidays: Option<Vec<String>>,
         pub proxy: Option<Vec<String>>,
         pub jira: Option<Vec<String>>,
+        pub home_work_train_stations: Option<Vec<String>>,
     }
 
     impl CAConfig {
@@ -114,6 +115,7 @@ pub mod configuration {
                 recognition = [\"<URL to website with recognition>\"]
                 holidays = [\"<URL to website with holidays request form>\"]
                 proxy = [\"<URL of proxy servers>\"]
+                home_work_train_stations = [\"<Name of SKM train station nearby home and work e.g. Gdansk Wrzeszcz  and Gdansk Port Lotniczy>\"]
                 ";
                 let mut file = File::create(config_name).expect_and_log(&format!(
                     "Unable to create default repos config: {}",
