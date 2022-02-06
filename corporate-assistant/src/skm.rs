@@ -158,6 +158,7 @@ pub mod skm {
         use tts::*;
 
         #[test]
+        #[ignore]
         fn test_skm() -> Result<(), String> {
             init_logging_infrastructure();
             let mut tts = TTS::default().expect("Problem starting TTS engine");
