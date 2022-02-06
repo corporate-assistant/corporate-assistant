@@ -311,7 +311,7 @@ pub mod jira {
                 .get(&(self.jira_url.clone() + "/rest/api/2/field"))
                 .basic_auth(&login, Some(&pass)) // Get password
                 .send();
-            let mut actual_body = body.expect_and_log("GET to get JIRA board failed");
+            let actual_body = body.expect_and_log("GET to get JIRA board failed");
             if actual_body.status().is_success() == false {
                 log::error!("Error getting Response from JIRA");
                 panic!();

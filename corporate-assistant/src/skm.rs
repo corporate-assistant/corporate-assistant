@@ -11,6 +11,8 @@ pub mod skm {
     use serde::{Deserialize, Serialize};
     use std::collections::HashMap;
 
+    type ReqwestClient = reqwest::blocking::Client;
+
     impl CorporateAction for SKM {
         fn run(&self, tts: &mut tts::TTS) -> () {
             block_on(self.submit(tts));
@@ -80,7 +82,7 @@ pub mod skm {
         async fn submit(&self, tts: &mut tts::TTS) {
             // If there is proxy then pick first URL
             let client = match &self.proxy {
-                Some(org_proxies) => reqwest::Client::builder()
+                Some(org_proxies) => ReqwestClient::builder()
                     .proxy(
                         reqwest::Proxy::http(&org_proxies[0])
                             .expect_and_log("Error setting HTTP proxy"),
@@ -91,7 +93,7 @@ pub mod skm {
                     )
                     .build()
                     .expect_and_log("Could not create HTTP(SKM) client"),
-                None => reqwest::Client::builder()
+                None => ReqwestClient::builder()
                     .build()
                     .expect_and_log("Could not create HTTP(SKM) client"),
             };
@@ -103,11 +105,10 @@ pub mod skm {
             let res = client
                 .get(&(self.skm_url.clone()))
                 .send()
-                .await
                 .expect_and_log("Error sending SKM request")
                 .text();
 
-            let actual_response = res.await.expect_and_log("Error: unwrapping SKM response");
+            let actual_response = res.expect_and_log("Error: unwrapping SKM response");
             let from = self.get_station_id(&actual_response, &self.from_to[0]);
             let to = self.get_station_id(&actual_response, &self.from_to[1]);
             // Get Data
@@ -140,10 +141,9 @@ pub mod skm {
             let res = client
                 .get(&request)
                 .send()
-                .await
                 .expect_and_log("Error sending SKM request")
                 .text();
-            let actual_response = res.await.expect_and_log("Error: unwrapping SKM response");
+            let actual_response = res.expect_and_log("Error: unwrapping SKM response");
             let message = self.get_message(&actual_response, &self.from_to[0]).await;
             log::info!("SKM: uttered message: {}", &message);
             tts.speak(message, true).expect("Problem with utterance");
@@ -161,15 +161,10 @@ pub mod skm {
         fn test_skm() -> Result<(), String> {
             init_logging_infrastructure();
             let mut tts = TTS::default().expect("Problem starting TTS engine");
-            //TODO: create config manually not reading
-            let organization_config_file =
-                configuration::CAConfig::new().get_organization_config("itp.toml");
-            let org_info = configuration::parse_organization_config(&organization_config_file);
-
             // TODO: Polish characters support
             let skm = SKM::new(
                 "https://skm.trojmiasto.pl/".to_string(),
-                org_info.proxy,
+                None,
                 vec![
                     "Gdansk Wrzeszcz".to_string(),
                     "Gdansk Port Lotniczy".to_string(),
