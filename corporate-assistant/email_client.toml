@@ -1,7 +1,0 @@
-[email]
-login = "tpatejko"
-password = "some$passwd"
-server = "smtpauth.intel.com"
-port = 587
-from = "tomasz.patejko@gmail.com"
-to = "tomasz.patejko@intel.com"
