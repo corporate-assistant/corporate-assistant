@@ -3,12 +3,95 @@ pub mod actions {
     use chrono::Datelike;
     use corporate_assistant::interpreter::CorporateAction;
     use err_handling::ResultExt;
+    use fltk::{app, button::Button, input::Input, input::SecretInput, prelude::*, window::Window};
     pub use github_crawler::{get_contributions, parse_config, Conf, Contrib, RepoContribs};
     pub use mailer::{Client, Email};
     use num_traits::FromPrimitive;
     use serde::Deserialize;
     use std::io::prelude::*;
     use toml;
+
+    #[derive(Clone)]
+    enum LoginResult {
+        Done,
+        Exit,
+    }
+
+    fn render_login_window() -> Option<(String, String)> {
+        let app = app::App::default();
+
+        let input_size_x = 300;
+        let input_size_y = 25;
+
+        let button_size_x = 100;
+        let button_size_y = 50;
+
+        let internal_spacing = 10;
+        let external_spacing_y = 5;
+
+        let external_spacing_x = 100;
+        let wind_size_x = external_spacing_x + input_size_x + external_spacing_x;
+
+        let wind_size_y = external_spacing_y
+            + input_size_y
+            + internal_spacing
+            + input_size_y
+            + internal_spacing
+            + button_size_y
+            + external_spacing_y;
+
+        let mut wind = Window::default()
+            .with_size(wind_size_x, wind_size_y)
+            .center_screen()
+            .with_label("Email credentials");
+
+        let login_input_pos_x = external_spacing_x;
+        let login_input_pos_y = external_spacing_y;
+        let login_input = Input::default()
+            .with_pos(login_input_pos_x, login_input_pos_y)
+            .with_size(input_size_x, input_size_y)
+            .with_label("Login");
+
+        let password_input_pos_x = login_input_pos_x;
+        let password_input_pos_y = login_input_pos_y + input_size_y + internal_spacing;
+        let password_input = SecretInput::default()
+            .with_pos(password_input_pos_x, password_input_pos_y)
+            .with_size(input_size_x, input_size_y)
+            .with_label("Password");
+
+        let submit_but_pos_x = (wind_size_x - button_size_x) / 2;
+        let submit_but_pos_y = password_input_pos_y + input_size_y + internal_spacing;
+        let mut submit_but = Button::default()
+            .with_pos(submit_but_pos_x, submit_but_pos_y)
+            .with_size(button_size_x, button_size_y)
+            .with_label("Submit");
+
+        wind.end();
+        wind.show();
+
+        let (s, r) = app::channel::<LoginResult>();
+        submit_but.emit(s.clone(), LoginResult::Done);
+        wind.emit(s.clone(), LoginResult::Exit);
+
+        while app.wait() {
+            let msg = r.recv();
+
+            match &msg {
+                Some(msg) => match msg {
+                    LoginResult::Done => {
+                        return Some((login_input.value(), password_input.value()));
+                    }
+                    LoginResult::Exit => {
+                        return None;
+                    }
+                },
+                _ => {}
+            }
+        }
+
+        app.run().unwrap();
+        None
+    }
 
     impl CorporateAction for MSR {
         fn run(&self, tts: &mut tts::TTS) -> () {
@@ -44,8 +127,6 @@ pub mod actions {
 
     #[derive(Deserialize, Debug)]
     struct EmailConfig {
-        login: String,
-        password: String,
         server: String,
         port: u16,
         from: String,
@@ -92,7 +173,7 @@ pub mod actions {
             text
         }
 
-        fn print_text(repo_contribs: &RepoContribs) -> () {
+        fn print_text(repo_contribs: &RepoContribs) {
             let text = MSR::compose_contrib_text(repo_contribs);
             println!("{}", text);
             ()
@@ -105,18 +186,22 @@ pub mod actions {
             let mut c: String = "".to_string();
             reader.read_to_string(&mut c);
 
-            println!("{}", c);
             let email_config: EmailConfigOpt = toml::from_str(&c).unwrap();
 
             email_config.email.unwrap()
         }
 
         fn send_email(config: &EmailConfig, subject_line: &String, text: &String) {
-            let client = Client::new(&config.login, &config.password, &config.server, config.port);
+            if let Some(r) = render_login_window() {
+                let (login, password) = r;
+                let client = Client::new(&login, &password, &config.server, config.port);
 
-            let email = Email::new(&config.from, &config.to, &subject_line, &text);
+                let email = Email::new(&config.from, &config.to, &subject_line, &text);
 
-            email.send(&client);
+                email.send(&client);
+            } else {
+                ()
+            }
         }
 
         fn send_msr_email(repo_contribs: &RepoContribs) -> () {
