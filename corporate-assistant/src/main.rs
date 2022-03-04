@@ -150,6 +150,8 @@ fn main() {
         None => (),
     }
 
+    let email_config = &org_info.email.unwrap();
+
     intents
         .register_action(
             vec![
@@ -162,6 +164,7 @@ fn main() {
                 &org_info.proxy,
                 project_config_file,
                 4,
+                &email_config,
             )),
         )
         .expect_and_log("Registration of MSR module failed");
@@ -178,6 +181,7 @@ fn main() {
                 &org_info.proxy,
                 project_config_file,
                 1,
+                &email_config,
             )),
         )
         .expect_and_log("Registration of MSR module failed");
