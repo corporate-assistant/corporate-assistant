@@ -1,6 +1,7 @@
 pub mod actions {
     use crate::configuration;
     use chrono::Datelike;
+    use configuration::EmailConfig;
     use corporate_assistant::interpreter::CorporateAction;
     use err_handling::ResultExt;
     use fltk::{app, button::Button, input::Input, input::SecretInput, prelude::*, window::Window};
@@ -114,8 +115,9 @@ pub mod actions {
 
             let config_file = conf.config_file.clone();
             let (config, _) = parse_config(config_file);
+            println!("{:?}", config);
             let contribs = get_contributions(conf, config.unwrap());
-            MSR::send_msr_email(&contribs);
+            MSR::send_msr_email(&contribs, &self.server, self.port, &self.from, &self.to);
         }
     }
 
@@ -123,19 +125,10 @@ pub mod actions {
         proxies: Option<Vec<String>>,
         project_config_file: String,
         time_frame: u8,
-    }
-
-    #[derive(Deserialize, Debug)]
-    struct EmailConfig {
         server: String,
         port: u16,
         from: String,
         to: String,
-    }
-
-    #[derive(Deserialize)]
-    struct EmailConfigOpt {
-        email: Option<EmailConfig>,
     }
 
     impl MSR {
@@ -143,11 +136,16 @@ pub mod actions {
             proxies: &Option<Vec<String>>,
             project_config_file: &str,
             time_frame: u8,
+            email_config: &EmailConfig,
         ) -> Self {
             MSR {
                 proxies: proxies.clone(),
                 project_config_file: project_config_file.to_string(),
                 time_frame: time_frame,
+                server: email_config.server.clone(),
+                port: email_config.port,
+                from: email_config.from.clone(),
+                to: email_config.to.clone(),
             }
         }
 
@@ -179,24 +177,19 @@ pub mod actions {
             ()
         }
 
-        fn parse_config_file(email_config_file: std::path::PathBuf) -> EmailConfig {
-            let file = std::fs::File::open(email_config_file);
-            let mut reader = std::io::BufReader::new(file.expect_and_log("Cannot open file"));
-
-            let mut c: String = "".to_string();
-            reader.read_to_string(&mut c);
-
-            let email_config: EmailConfigOpt = toml::from_str(&c).unwrap();
-
-            email_config.email.unwrap()
-        }
-
-        fn send_email(config: &EmailConfig, subject_line: &String, text: &String) {
+        fn send_email(
+            server: &str,
+            port: u16,
+            subject_line: &str,
+            text: &str,
+            from: &str,
+            to: &str,
+        ) {
             if let Some(r) = render_login_window() {
                 let (login, password) = r;
-                let client = Client::new(&login, &password, &config.server, config.port);
+                let client = Client::new(&login, &password, &server, port);
 
-                let email = Email::new(&config.from, &config.to, &subject_line, &text);
+                let email = Email::new(&from, &to, &subject_line, &text);
 
                 email.send(&client);
             } else {
@@ -204,10 +197,13 @@ pub mod actions {
             }
         }
 
-        fn send_msr_email(repo_contribs: &RepoContribs) -> () {
-            let ca_config = configuration::CAConfig::new();
-            let email_config = Self::parse_config_file(ca_config.get_mailer_config());
-
+        fn send_msr_email(
+            repo_contribs: &RepoContribs,
+            server: &str,
+            port: u16,
+            from: &str,
+            to: &str,
+        ) -> () {
             let month = chrono::Utc::now().date().month();
             let year = chrono::Utc::now().date().year();
 
@@ -219,7 +215,7 @@ pub mod actions {
 
             let text = MSR::compose_contrib_text(repo_contribs);
 
-            MSR::send_email(&email_config, &subject_line, &text);
+            MSR::send_email(&server, port, &subject_line, &text, &from, &to);
         }
     }
 
@@ -232,6 +228,13 @@ pub mod actions {
         #[test]
         fn test_register() -> Result<(), String> {
             let mut intents = corporate_assistant::interpreter::Intents::new();
+            let dummy_config = EmailConfig {
+                server: String::new(),
+                port: 0,
+                from: String::new(),
+                to: String::new(),
+            };
+
             intents
                 .register_action(
                     vec![
@@ -240,7 +243,7 @@ pub mod actions {
                         "create my monthly status report".to_string(),
                         "create monthly status report".to_string(),
                     ],
-                    Rc::new(MSR::new(&None, "dummy.toml", 4)),
+                    Rc::new(MSR::new(&None, "dummy.toml", 4, &dummy_config)),
                 )
                 .expect("Registration failed");
             // Get registered action
@@ -255,8 +258,14 @@ pub mod actions {
         #[ignore]
         fn test_msr() -> Result<(), String> {
             let mut tts = TTS::default().expect("Problem starting TTS engine");
+            let dummy_config = EmailConfig {
+                server: String::new(),
+                port: 0,
+                from: String::new(),
+                to: String::new(),
+            };
 
-            let msr = MSR::new(&None, "paddle.toml", 4);
+            let msr = MSR::new(&None, "paddle.toml", 4, &dummy_config);
             msr.run(&mut tts);
             Ok(())
         }

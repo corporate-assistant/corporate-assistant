@@ -13,7 +13,15 @@ pub mod configuration {
         config_dir: PathBuf,
     }
 
-    #[derive(Deserialize)]
+    #[derive(Deserialize, Debug)]
+    pub struct EmailConfig {
+        pub server: String,
+        pub port: u16,
+        pub from: String,
+        pub to: String,
+    }
+
+    #[derive(Deserialize, Debug)]
     pub struct OrganizationConfig {
         pub restaurants: Option<Vec<String>>,
         pub recognition: Option<Vec<String>>,
@@ -21,6 +29,7 @@ pub mod configuration {
         pub proxy: Option<Vec<String>>,
         pub jira: Option<Vec<String>>,
         pub home_work_train_stations: Option<Vec<String>>,
+        pub email: Option<EmailConfig>,
     }
 
     impl CAConfig {
