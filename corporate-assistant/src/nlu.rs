@@ -141,7 +141,6 @@ pub mod nlu {
     #[cfg(test)]
     mod tests {
         use super::*;
-        use err_handling::{init_logging_infrastructure, ResultExt};
         use tts::*;
 
         #[test]
