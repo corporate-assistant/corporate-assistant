@@ -23,6 +23,7 @@ mod labeling_assistant;
 mod msr; // Need this to know there is separate module in this project // Need this to know there is separate module in this project
 mod skm;
 mod webbrowser;
+mod nlu;
 
 fn main() {
     init_logging_infrastructure();
@@ -135,7 +136,7 @@ fn main() {
         Some(jira) => {
             intents
                 .register_action(
-                    vec!["file an issue".to_string()],
+                    "file an issue".to_string(),
                     Rc::new(jira::jira::JIRA::new(
                         jira.user,
                         jira.url,
@@ -154,12 +155,7 @@ fn main() {
 
     intents
         .register_action(
-            vec![
-                "compose my monthly status report".to_string(),
-                "compose monthly status report".to_string(),
-                "create my monthly status report".to_string(),
                 "create monthly status report".to_string(),
-            ],
             Rc::new(msr::actions::MSR::new(
                 &org_info.proxy,
                 project_config_file,
@@ -171,12 +167,7 @@ fn main() {
     log::info!("MSR module registered");
     intents
         .register_action(
-            vec![
-                "compose my weekly status report".to_string(),
                 "compose weekly status report".to_string(),
-                "create my weekly status report".to_string(),
-                "create weekly status report".to_string(),
-            ],
             Rc::new(msr::actions::MSR::new(
                 &org_info.proxy,
                 project_config_file,
@@ -188,10 +179,7 @@ fn main() {
     log::info!("MSR module registered");
     intents
         .register_action(
-            vec![
                 "create custom action".to_string(),
-                "compose custom action".to_string(),
-            ],
             Rc::new(ca::actions::CreateCustomAction::new(m, rec.clone())),
         )
         .expect_and_log("Registration of CCA module failed");
@@ -202,14 +190,7 @@ fn main() {
         Some(i) => {
             intents
                 .register_action(
-                    vec![
-                        "when is the train to work".to_string(),
-                        "when is the train work".to_string(),
                         "when is the next train to work".to_string(),
-                        "when is the next train work".to_string(),
-                        "when can i go to work".to_string(),
-                        "when does the train to work departs".to_string(),
-                    ],
                     Rc::new(skm::skm::SKM::new(
                         "https://skm.trojmiasto.pl/".to_string(),
                         org_info.proxy.clone(),
@@ -222,12 +203,7 @@ fn main() {
             to_from.reverse();
             intents
                 .register_action(
-                    vec![
-                        "when is the train home".to_string(),
                         "when is the next train home".to_string(),
-                        "when can i return home".to_string(),
-                        "when does the train home departs".to_string(),
-                    ],
                     Rc::new(skm::skm::SKM::new(
                         "https://skm.trojmiasto.pl/".to_string(),
                         org_info.proxy.clone(),
@@ -243,14 +219,7 @@ fn main() {
         Some(i) => {
             intents
                 .register_action(
-                    vec![
-                        "open lunch menu".to_string(),
-                        "open lunch menus".to_string(),
-                        "open the lunch menu".to_string(),
                         "open the lunch menus".to_string(),
-                        "what should I eat".to_string(),
-                        "what should I have for lunch".to_string(),
-                    ],
                     Rc::new(webbrowser::actions::OpenWebsites::new(
                         i,
                         "Opening lunch menus".to_string(),
@@ -265,16 +234,8 @@ fn main() {
         Some(i) => {
             intents
                 .register_action(
-                    vec![
-                        "i want holidays".to_string(),
-                        "i want my holidays".to_string(),
-                        "i want vacations".to_string(),
-                        "i want to book holidays".to_string(),
-                        "i want to book vacations".to_string(),
-                        "i want to request holidays".to_string(),
-                        "i want to request vacations".to_string(),
                         "give me holidays".to_string(),
-                    ],
+                    
                     Rc::new(webbrowser::actions::OpenWebsites::new(
                         i,
                         "Opening the holdiday request form".to_string(),
@@ -289,13 +250,8 @@ fn main() {
         Some(i) => {
             intents
                 .register_action(
-                    vec![
-                        "i want to recognize".to_string(),
-                        "i want to recognize my colleague".to_string(),
-                        "i want to recognize someone".to_string(),
-                        "i want to give recognition".to_string(),
                         "give recognition".to_string(),
-                    ],
+                    
                     Rc::new(webbrowser::actions::OpenWebsites::new(
                         i,
                         "Opening the recognition system".to_string(),
@@ -308,7 +264,7 @@ fn main() {
     }
 
     // Get requested action
-    let action = intents.get_action(&result);
+    let action = intents.get_action(&nlu::nlu::normalize_phrase(&result));
 
     // Let's match e.g. If phrase not recognized then execute dumping
     // if proper Action object returned then execute it
