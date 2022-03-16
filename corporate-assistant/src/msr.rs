@@ -237,12 +237,7 @@ pub mod actions {
 
             intents
                 .register_action(
-                    vec![
-                        "compose my monthly status report".to_string(),
-                        "compose monthly status report".to_string(),
-                        "create my monthly status report".to_string(),
-                        "create monthly status report".to_string(),
-                    ],
+                    "create my monthly status report".to_string(),
                     Rc::new(MSR::new(&None, "dummy.toml", 4, &dummy_config)),
                 )
                 .expect("Registration failed");

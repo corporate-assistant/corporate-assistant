@@ -21,9 +21,9 @@ mod config;
 mod jira;
 mod labeling_assistant;
 mod msr; // Need this to know there is separate module in this project // Need this to know there is separate module in this project
+mod nlu;
 mod skm;
 mod webbrowser;
-mod nlu;
 
 fn main() {
     init_logging_infrastructure();
@@ -155,7 +155,7 @@ fn main() {
 
     intents
         .register_action(
-                "create monthly status report".to_string(),
+            "create monthly status report".to_string(),
             Rc::new(msr::actions::MSR::new(
                 &org_info.proxy,
                 project_config_file,
@@ -167,7 +167,7 @@ fn main() {
     log::info!("MSR module registered");
     intents
         .register_action(
-                "compose weekly status report".to_string(),
+            "compose weekly status report".to_string(),
             Rc::new(msr::actions::MSR::new(
                 &org_info.proxy,
                 project_config_file,
@@ -179,7 +179,7 @@ fn main() {
     log::info!("MSR module registered");
     intents
         .register_action(
-                "create custom action".to_string(),
+            "create custom action".to_string(),
             Rc::new(ca::actions::CreateCustomAction::new(m, rec.clone())),
         )
         .expect_and_log("Registration of CCA module failed");
@@ -190,7 +190,7 @@ fn main() {
         Some(i) => {
             intents
                 .register_action(
-                        "when is the next train to work".to_string(),
+                    "when is the next train to work".to_string(),
                     Rc::new(skm::skm::SKM::new(
                         "https://skm.trojmiasto.pl/".to_string(),
                         org_info.proxy.clone(),
@@ -203,7 +203,7 @@ fn main() {
             to_from.reverse();
             intents
                 .register_action(
-                        "when is the next train home".to_string(),
+                    "when is the next train home".to_string(),
                     Rc::new(skm::skm::SKM::new(
                         "https://skm.trojmiasto.pl/".to_string(),
                         org_info.proxy.clone(),
@@ -219,7 +219,7 @@ fn main() {
         Some(i) => {
             intents
                 .register_action(
-                        "open the lunch menus".to_string(),
+                    "open the lunch menus".to_string(),
                     Rc::new(webbrowser::actions::OpenWebsites::new(
                         i,
                         "Opening lunch menus".to_string(),
@@ -234,8 +234,7 @@ fn main() {
         Some(i) => {
             intents
                 .register_action(
-                        "give me holidays".to_string(),
-                    
+                    "give me holidays".to_string(),
                     Rc::new(webbrowser::actions::OpenWebsites::new(
                         i,
                         "Opening the holdiday request form".to_string(),
@@ -250,8 +249,7 @@ fn main() {
         Some(i) => {
             intents
                 .register_action(
-                        "give recognition".to_string(),
-                    
+                    "give recognition".to_string(),
                     Rc::new(webbrowser::actions::OpenWebsites::new(
                         i,
                         "Opening the recognition system".to_string(),
