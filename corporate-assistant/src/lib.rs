@@ -8,19 +8,17 @@ pub mod interpreter {
     }
 
     pub struct Intents {
-        intents: HashMap<String, Rc<CorporateAction>>,
+        intents: HashMap<String, Rc<dyn CorporateAction>>,
     }
 
     // Register new action Trait
     impl Intents {
         pub fn register_action(
             &mut self,
-            keys: Vec<String>,
+            key: String,
             action: Rc<dyn CorporateAction>,
         ) -> Result<(), String> {
-            for key in keys {
-                self.intents.insert(String::from(key), action.clone());
-            }
+            self.intents.insert(String::from(key), action.clone());
             Ok(())
         }
 

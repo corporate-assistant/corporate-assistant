@@ -60,7 +60,7 @@ pub mod actions {
             println!("  with script: {}", ca.script);
             intents
                 .register_action(
-                    vec![ca.phrase.clone()],
+                    ca.phrase.clone(),
                     Rc::new(ExecuteCustomAction::new(ca.script.clone())),
                 )
                 .expect(&format!("Unable to register: {}", ca.phrase))
