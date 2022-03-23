@@ -242,7 +242,7 @@ pub mod actions {
                 )
                 .expect("Registration failed");
             // Get registered action
-            let action = intents.get_action("compose my monthly status report");
+            let action = intents.get_action("create my monthly status report");
             match action {
                 Ok(action) => Ok(()),
                 Err(action) => Err(String::from("Error getting an action")),
