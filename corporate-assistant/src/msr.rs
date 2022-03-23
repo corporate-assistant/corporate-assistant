@@ -222,6 +222,7 @@ pub mod actions {
     #[cfg(test)]
     mod tests {
         use super::*;
+        use crate::nlu::*;
         use std::rc::Rc;
         use tts::*;
 
@@ -237,12 +238,13 @@ pub mod actions {
 
             intents
                 .register_action(
-                    "create my monthly status report".to_string(),
+                    nlu::normalize_phrase("create my monthly status report"),
                     Rc::new(MSR::new(&None, "dummy.toml", 4, &dummy_config)),
                 )
                 .expect("Registration failed");
             // Get registered action
-            let action = intents.get_action("create my monthly status report");
+            let action =
+                intents.get_action(&nlu::normalize_phrase("create my monthly status report"));
             match action {
                 Ok(action) => Ok(()),
                 Err(action) => Err(String::from("Error getting an action")),

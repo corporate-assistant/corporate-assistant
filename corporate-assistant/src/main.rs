@@ -136,7 +136,7 @@ fn main() {
         Some(jira) => {
             intents
                 .register_action(
-                    "file an issue".to_string(),
+                    nlu::nlu::normalize_phrase("file an issue"),
                     Rc::new(jira::jira::JIRA::new(
                         jira.user,
                         jira.url,
@@ -151,35 +151,38 @@ fn main() {
         None => (),
     }
 
-    let email_config = &org_info.email.unwrap();
-
+    match org_info.email {
+        Some(email_config) => {
+            intents
+                .register_action(
+                    nlu::nlu::normalize_phrase("create monthly status report"),
+                    Rc::new(msr::actions::MSR::new(
+                        &org_info.proxy,
+                        project_config_file,
+                        4,
+                        &email_config,
+                    )),
+                )
+                .expect_and_log("Registration of MSR module failed");
+            log::info!("MSR module registered");
+            intents
+                .register_action(
+                    nlu::nlu::normalize_phrase("create weekly status report"),
+                    Rc::new(msr::actions::MSR::new(
+                        &org_info.proxy,
+                        project_config_file,
+                        1,
+                        &email_config,
+                    )),
+                )
+                .expect_and_log("Registration of MSR module failed");
+            log::info!("MSR module registered");
+        }
+        None => (),
+    }
     intents
         .register_action(
-            "create monthly status report".to_string(),
-            Rc::new(msr::actions::MSR::new(
-                &org_info.proxy,
-                project_config_file,
-                4,
-                &email_config,
-            )),
-        )
-        .expect_and_log("Registration of MSR module failed");
-    log::info!("MSR module registered");
-    intents
-        .register_action(
-            "create weekly status report".to_string(),
-            Rc::new(msr::actions::MSR::new(
-                &org_info.proxy,
-                project_config_file,
-                1,
-                &email_config,
-            )),
-        )
-        .expect_and_log("Registration of MSR module failed");
-    log::info!("MSR module registered");
-    intents
-        .register_action(
-            "create custom action".to_string(),
+            nlu::nlu::normalize_phrase("create custom action"),
             Rc::new(ca::actions::CreateCustomAction::new(m, rec.clone())),
         )
         .expect_and_log("Registration of CCA module failed");
@@ -190,7 +193,7 @@ fn main() {
         Some(i) => {
             intents
                 .register_action(
-                    "when is the next train to work".to_string(),
+                    nlu::nlu::normalize_phrase("when is the next train to work"),
                     Rc::new(skm::skm::SKM::new(
                         "https://skm.trojmiasto.pl/".to_string(),
                         org_info.proxy.clone(),
@@ -203,7 +206,7 @@ fn main() {
             to_from.reverse();
             intents
                 .register_action(
-                    "when is the next train home".to_string(),
+                    nlu::nlu::normalize_phrase("when is the next train home"),
                     Rc::new(skm::skm::SKM::new(
                         "https://skm.trojmiasto.pl/".to_string(),
                         org_info.proxy.clone(),
@@ -219,7 +222,7 @@ fn main() {
         Some(i) => {
             intents
                 .register_action(
-                    "open lunch menus".to_string(),
+                    nlu::nlu::normalize_phrase("open lunch menus"),
                     Rc::new(webbrowser::actions::OpenWebsites::new(
                         i,
                         "Opening lunch menus".to_string(),
@@ -234,7 +237,7 @@ fn main() {
         Some(i) => {
             intents
                 .register_action(
-                    "give me holidays".to_string(),
+                    nlu::nlu::normalize_phrase("give me holidays"),
                     Rc::new(webbrowser::actions::OpenWebsites::new(
                         i,
                         "Opening the holdiday request form".to_string(),
@@ -249,7 +252,7 @@ fn main() {
         Some(i) => {
             intents
                 .register_action(
-                    "give recognition".to_string(),
+                    nlu::nlu::normalize_phrase("give recognition"),
                     Rc::new(webbrowser::actions::OpenWebsites::new(
                         i,
                         "Opening the recognition system".to_string(),
