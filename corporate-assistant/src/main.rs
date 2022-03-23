@@ -167,7 +167,7 @@ fn main() {
     log::info!("MSR module registered");
     intents
         .register_action(
-            "compose weekly status report".to_string(),
+            "create weekly status report".to_string(),
             Rc::new(msr::actions::MSR::new(
                 &org_info.proxy,
                 project_config_file,
@@ -219,7 +219,7 @@ fn main() {
         Some(i) => {
             intents
                 .register_action(
-                    "open the lunch menus".to_string(),
+                    "open lunch menus".to_string(),
                     Rc::new(webbrowser::actions::OpenWebsites::new(
                         i,
                         "Opening lunch menus".to_string(),
