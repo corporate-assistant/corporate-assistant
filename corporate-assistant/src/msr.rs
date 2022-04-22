@@ -10,6 +10,7 @@ pub mod actions {
     use num_traits::FromPrimitive;
     use serde::Deserialize;
     use std::io::prelude::*;
+    use tokio::runtime::Runtime;
     use toml;
 
     #[derive(Clone)]
@@ -116,8 +117,12 @@ pub mod actions {
             let config_file = conf.config_file.clone();
             let (config, _) = parse_config(config_file);
             println!("{:?}", config);
-            let contribs = get_contributions(conf, config.unwrap());
-            MSR::send_msr_email(&contribs, &self.server, self.port, &self.from, &self.to);
+
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            rt.block_on(async {
+                let contribs = get_contributions(conf, config.unwrap()).await;
+                MSR::send_msr_email(&contribs, &self.server, self.port, &self.from, &self.to);
+            });
         }
     }
 

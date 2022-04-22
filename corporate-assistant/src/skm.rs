@@ -11,7 +11,7 @@ pub mod skm {
     use serde::{Deserialize, Serialize};
     use std::collections::HashMap;
 
-    type ReqwestClient = reqwest::blocking::Client;
+    type ReqwestClient = reqwest::Client;
 
     impl CorporateAction for SKM {
         fn run(&self, tts: &mut tts::TTS) -> () {
@@ -102,11 +102,9 @@ pub mod skm {
 
             log::info!("SKM: sending request: {}", &self.skm_url);
             // Get IDs of stations e.g. Gdansk Wrzeszcz : 7534
-            let res = client
-                .get(&(self.skm_url.clone()))
-                .send()
-                .expect_and_log("Error sending SKM request")
-                .text();
+            let res = client.get(&(self.skm_url.clone())).send().await;
+
+            let res = res.expect_and_log("Error sending SKM request").text().await;
 
             let actual_response = res.expect_and_log("Error: unwrapping SKM response");
             let from = self.get_station_id(&actual_response, &self.from_to[0]);
@@ -141,8 +139,11 @@ pub mod skm {
             let res = client
                 .get(&request)
                 .send()
+                .await
                 .expect_and_log("Error sending SKM request")
-                .text();
+                .text()
+                .await;
+
             let actual_response = res.expect_and_log("Error: unwrapping SKM response");
             let message = self.get_message(&actual_response, &self.from_to[0]).await;
             log::info!("SKM: uttered message: {}", &message);
