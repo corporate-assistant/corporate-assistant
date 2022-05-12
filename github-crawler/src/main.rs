@@ -1,6 +1,7 @@
 use chrono;
 use prettytable::*;
 use std::env;
+use tokio::runtime::Runtime;
 
 pub use github_crawler::{get_contributions, parse_config, Conf, Contrib, RepoContribs};
 
@@ -30,7 +31,6 @@ fn parse_cmdline() -> Conf {
 
     for arg in env::args() {
         if arg.starts_with("--") {
-            println!("{:?}", arg);
             let trimmed = arg.trim_start_matches("--");
             let split: Vec<_> = trimmed.split("=").collect();
             let key = split[0];
@@ -87,7 +87,6 @@ fn print_text(repo_contribs: &RepoContribs) -> () {
         }
     }
 
-    println!("{}", text);
     ()
 }
 
@@ -96,10 +95,14 @@ fn main() -> Result<(), anyhow::Error> {
     let config_file = conf.config_file.clone();
     let (github_config, _) = parse_config(config_file);
 
-    let contribs = get_contributions(conf, github_config.unwrap());
+    let rt = tokio::runtime::Runtime::new().unwrap();
 
-    print_table(&contribs);
-    print_text(&contribs);
+    rt.block_on(async {
+        let c = github_config.unwrap();
+        let contribs = get_contributions(conf, c).await;
+        print_table(&contribs);
+        print_text(&contribs);
+    });
 
     Ok(())
 }

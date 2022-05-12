@@ -53,14 +53,14 @@ fn behind_proxy() -> Result<bool, String> {
     }
 }
 
-fn build_client(proxies: &Option<Vec<String>>, token: &str) -> reqwest::blocking::Client {
+fn build_client(proxies: &Option<Vec<String>>, token: &str) -> reqwest::Client {
     let proxy = if let Some(proxies) = proxies {
         Some(proxies[0].clone())
     } else {
         None
     };
 
-    reqwest::blocking::Client::builder()
+    reqwest::Client::builder()
         .user_agent("request")
         .default_headers(
             std::iter::once((
@@ -206,7 +206,7 @@ pub struct Conf {
     pub config_file: PathBuf,
 }
 
-pub fn get_contributions(conf: Conf, config: config_parser::GithubConfig) -> RepoContribs {
+pub async fn get_contributions(conf: Conf, config: config_parser::GithubConfig) -> RepoContribs {
     let github_user = &config.user;
 
     let github_url = &config.url;
@@ -223,10 +223,11 @@ pub fn get_contributions(conf: Conf, config: config_parser::GithubConfig) -> Rep
         .post(github_url)
         .json(&q)
         .send()
+        .await
         .expect_and_log("Sender error");
 
     let response_body: Response<user_pr_view::ResponseData> =
-        res.json().expect_and_log("Response error");
+        res.json().await.expect_and_log("Response error");
 
     let (mut end_cursor, mut contribs) = get_repo_contribs(
         &response_body.data.expect("missing response data"),
@@ -245,10 +246,14 @@ pub fn get_contributions(conf: Conf, config: config_parser::GithubConfig) -> Rep
             .post(github_url)
             .json(&q)
             .send()
+            .await
             .expect_and_log("Yet another sending error");
 
-        let response_body: Response<user_pr_view_next::ResponseData> =
-            res.json().expect_and_log("Yet another response error");
+        let response_body: Response<user_pr_view_next::ResponseData> = res
+            .json()
+            .await
+            .expect_and_log("Yet another response error");
+
         let (after_cursor, next_contribs) = get_repo_contribs_next(
             &response_body.data.expect("missing response data"),
             &config.repos,
@@ -262,5 +267,6 @@ pub fn get_contributions(conf: Conf, config: config_parser::GithubConfig) -> Rep
             contribs.entry(k).or_insert(Vec::new()).append(&mut v);
         }
     }
+
     contribs
 }

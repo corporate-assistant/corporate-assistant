@@ -8,6 +8,7 @@ pub mod jira {
     use futures::executor::block_on;
     use serde::{Deserialize, Serialize};
     use std::collections::HashMap;
+    use std::future::Future;
 
     impl CorporateAction for JIRA {
         fn run(&self, tts: &mut tts::TTS) -> () {
@@ -25,7 +26,7 @@ pub mod jira {
         }
     }
 
-    type ReqwestClient = reqwest::blocking::Client;
+    type ReqwestClient = reqwest::Client;
 
     #[derive(Debug, Deserialize, Serialize)]
     struct BoardSpec {
@@ -300,7 +301,7 @@ pub mod jira {
             );
         }
 
-        fn get_epics_custom_link(
+        async fn get_epics_custom_link(
             &self,
             client: &ReqwestClient,
             login: &str,
@@ -310,7 +311,9 @@ pub mod jira {
             let body = client
                 .get(&(self.jira_url.clone() + "/rest/api/2/field"))
                 .basic_auth(&login, Some(&pass)) // Get password
-                .send();
+                .send()
+                .await;
+
             let actual_body = body.expect_and_log("GET to get JIRA board failed");
             if actual_body.status().is_success() == false {
                 log::error!("Error getting Response from JIRA");
@@ -320,6 +323,7 @@ pub mod jira {
             // println!("Fields: {}", actual_body.text().unwrap());
             let custom_fields = actual_body
                 .json::<Vec<CustomFieldDesc>>()
+                .await
                 .expect_and_log("Error converting response to JSON");
             //println!("fields = {:#?}", custom_fields);
 
@@ -333,7 +337,12 @@ pub mod jira {
             }
         }
 
-        fn fetch_sprint(&self, client: &ReqwestClient, login: &str, pass: &str) -> Option<Sprint> {
+        async fn fetch_sprint(
+            &self,
+            client: &ReqwestClient,
+            login: &str,
+            pass: &str,
+        ) -> Option<Sprint> {
             let body = client
                 .get(
                     &(self.jira_url.clone()
@@ -341,7 +350,9 @@ pub mod jira {
                         + &self.project),
                 )
                 .basic_auth(&login, Some(&pass)) // Get password
-                .send();
+                .send()
+                .await;
+
             let mut actual_body = body.expect_and_log("GET to get JIRA board failed");
             if actual_body.status().is_success() == false {
                 log::error!("Error getting Response from JIRA");
@@ -352,6 +363,7 @@ pub mod jira {
             let sprints: JIRAResponse<SprintSpec>;
             let boards = actual_body
                 .json::<JIRAResponse<BoardSpec>>()
+                .await
                 .expect_and_log("Error converting response to JSON");
             println!("body = {:#?}", boards);
             // Pick first returned value as most recent board
@@ -360,11 +372,14 @@ pub mod jira {
                 let body = client
                     .get(&((&boards.values[0].self_).to_string() + "/sprint?state=active"))
                     .basic_auth(&login, Some(&pass)) // Get password
-                    .send();
+                    .send()
+                    .await;
+
                 let mut actual_body = body.expect_and_log("GET to get JIRA current sprint failed");
                 if actual_body.status().is_success() {
                     sprints = actual_body
                         .json::<JIRAResponse<SprintSpec>>()
+                        .await
                         .expect_and_log("Error converting response to JSON");
                     println!("body of sprints = {:#?}", sprints);
                     Some(Sprint {
@@ -380,14 +395,14 @@ pub mod jira {
             }
         }
 
-        fn submit_issue(
+        async fn submit_issue(
             &self,
             tts: &mut tts::TTS,
             client: &ReqwestClient,
             login: &str,
             pass: &str,
-            epic_custom_link: Option<String>, // TODO: Use it somewhere
-            curr_sprint: Option<Sprint>,
+            epic_custom_link_future: impl Future<Output = Option<String>>, // TODO: Use it somewhere
+            curr_sprint_future: impl Future<Output = Option<Sprint>>,
             title: &str,
             desc: &str,
             epic: Option<String>,
@@ -398,78 +413,82 @@ pub mod jira {
                     let mut my_jira_task = HashMap::new();
                     let issue_to_submit = JIRATaskProjectDesc::new(&self.project, title, desc);
                     my_jira_task.insert("fields".to_string(), issue_to_submit);
-                    let res = client
+                    client
                         .post(&(self.jira_url.clone() + "/rest/api/2/issue/"))
                         .basic_auth(&login, Some(&pass))
                         .json(&my_jira_task)
-                        .send();
-                    res
+                        .send()
                 }
                 Some(epic_name) => {
                     let mut my_jira_task = HashMap::new();
                     let issue_to_submit =
                         JIRATaskWithinEpicProjectDesc::new(&self.project, title, desc, &epic_name);
                     my_jira_task.insert("fields".to_string(), issue_to_submit);
-                    let res = client
+                    client
                         .post(&(self.jira_url.clone() + "/rest/api/2/issue/"))
                         .basic_auth(&login, Some(&pass))
                         .json(&my_jira_task)
-                        .send();
-                    res
+                        .send()
                 }
             };
 
-            let mut actual_response = res.expect_and_log("Error sending JIRA request");
-            if actual_response.status().is_success() {
-                let added_task = actual_response
-                    .json::<JIRATaskSubmitted>()
-                    .expect_and_log("Error converting response to JSON");
-                println!("JIRA task submitted: {:#?}", added_task);
-                // Send added JIRA task to sprint
-                match curr_sprint {
-                    Some(sprint) => {
-                        let mut sprint_issues = HashMap::new();
-                        sprint_issues.insert("issues".to_string(), vec![added_task.key]);
-                        let res = client
-                            .post(&(String::from(sprint.url) + "/issue"))
-                            .basic_auth(login, Some(pass))
-                            .json(&sprint_issues)
-                            .send();
-                        let mut actual_response =
-                            res.expect_and_log("Error sending JIRA request to add task to Sprint");
-                        if actual_response.status().is_success() {
-                            let feedback = format!(
-                                "{} submitted to Sprint {} in JIRA",
-                                sprint_issues["issues"][0], sprint.name
-                            );
-                            tts.speak(feedback, true).expect("Problem with utterance");
-                        } else {
-                            eprintln!(
-                                "Error {} adding {} to Sprint {}.",
-                                actual_response.status(),
-                                sprint_issues["issues"][0],
-                                sprint.name
-                            );
-                            let error_body = actual_response
-                                .text()
-                                .expect_and_log("Error converting response to Text");
-                            eprintln!("error_body = {:#?}", error_body);
-                        }
-                    }
-                    None => {
-                        println!("Not adding to sprint")
+            // Send added JIRA task to sprint
+            match curr_sprint_future.await {
+                Some(sprint) => {
+                    let mut sprint_issues = HashMap::new();
+
+                    let mut actual_response =
+                        res.await.expect_and_log("Error sending JIRA request");
+                    let added_task = if actual_response.status().is_success() {
+                        actual_response
+                            .json::<JIRATaskSubmitted>()
+                            .await
+                            .expect_and_log("Error converting response to JSON")
+                    } else {
+                        eprintln!(
+                            "Error submitting JIRA issue. Error: {:?}",
+                            actual_response.status()
+                        );
+                        let error_body = actual_response
+                            .text()
+                            .await
+                            .expect_and_log("Error converting response to Text");
+                        eprintln!("error_body = {:#?}", error_body);
+                        todo!();
+                    };
+
+                    sprint_issues.insert("issues".to_string(), vec![added_task.key]);
+                    let res = client
+                        .post(&(String::from(sprint.url) + "/issue"))
+                        .basic_auth(login, Some(pass))
+                        .json(&sprint_issues)
+                        .send()
+                        .await;
+                    let mut actual_response =
+                        res.expect_and_log("Error sending JIRA request to add task to Sprint");
+                    if actual_response.status().is_success() {
+                        let feedback = format!(
+                            "{} submitted to Sprint {} in JIRA",
+                            sprint_issues["issues"][0], sprint.name
+                        );
+                        tts.speak(feedback, true).expect("Problem with utterance");
+                    } else {
+                        eprintln!(
+                            "Error {} adding {} to Sprint {}.",
+                            actual_response.status(),
+                            sprint_issues["issues"][0],
+                            sprint.name
+                        );
+                        let error_body = actual_response
+                            .text()
+                            .await
+                            .expect_and_log("Error converting response to Text");
+                        eprintln!("error_body = {:#?}", error_body);
                     }
                 }
-            } else {
-                eprintln!(
-                    "Error submitting JIRA issue. Error: {:?}",
-                    actual_response.status()
-                );
-                let error_body = actual_response
-                    .text()
-                    .expect_and_log("Error converting response to Text");
-                eprintln!("error_body = {:#?}", error_body);
-                todo!();
+                None => {
+                    println!("Not adding to sprint")
+                }
             }
         }
     }
