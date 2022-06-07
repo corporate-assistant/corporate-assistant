@@ -5,6 +5,7 @@ extern crate deepspeech;
 use clap::{App, Arg};
 
 use crate::config::configuration;
+use corporate_assistant::speaker::Speaker;
 use deepspeech::Model;
 use err_handling::{init_logging_infrastructure, ResultExt};
 use github_crawler::parse_config;
@@ -13,7 +14,6 @@ use std::fs::create_dir_all;
 use std::path::Path;
 use std::rc::Rc;
 use std::{thread, time};
-use tts::*;
 
 pub use record::recorder::Recorder;
 mod ca;
@@ -88,13 +88,16 @@ fn main() {
     // Record audio to mimic arecord e.g.
     // arecord -r 16000 -f S16_LE $filename.wav
     // if only utterance is completed
-    let mut tts = TTS::default().expect("Problem starting TTS engine");
+    let mut speaker = Speaker::new().expect("Problem starting TTS engine");
+
     let rec = Rc::new(Recorder::new());
 
-    tts.speak("I'm listening", true)
+    speaker
+        .speak("I'm listening", true)
         .expect("Problem with utterance");
+
     // TTS finished talking e.g. sending data to speaker
-    while tts.is_speaking().unwrap() == true {}
+    while speaker.is_speaking().unwrap() == true {}
     //.. yet we need to wait so that recorder did not pick up still hearable sound
     let canceling_pause = time::Duration::from_millis(400);
     thread::sleep(canceling_pause);
@@ -270,11 +273,12 @@ fn main() {
     // Let's match e.g. If phrase not recognized then execute dumping
     // if proper Action object returned then execute it
     match action {
-        Ok(action) => action.run(&mut tts),
+        Ok(action) => action.run(&mut speaker),
         Err(action) => {
             log::error!("No action found for : {}", action);
             // Announce that request is unknown
-            tts.speak("I do not understand", true)
+            speaker
+                .speak("I do not understand", true)
                 .expect("Error: Problem with utterance");
             // Make a GUI for helping user to label recording
             let result = labeling_assistant::labeling_assistant::run(
@@ -293,7 +297,8 @@ fn main() {
                     // Save unrecognized audio into directory
                     rec.store(&recorded_vec, channels, freq, unrecognized_dir, &result)
                         .expect_and_log("Saving unrecognized command failed!");
-                    tts.speak("Recording stored", true)
+                    speaker
+                        .speak("Recording stored", true)
                         .expect("Problem with utterance");
                 }
                 None => (),

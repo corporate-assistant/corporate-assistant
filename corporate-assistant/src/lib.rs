@@ -1,10 +1,11 @@
-pub mod interpreter {
+pub mod speaker;
 
+pub mod interpreter {
+    use crate::speaker::Speaker;
     use std::collections::HashMap;
     use std::rc::Rc;
-
     pub trait CorporateAction {
-        fn run(&self, tts: &mut tts::TTS) -> ();
+        fn run(&self, speaker: &mut Speaker) -> ();
     }
 
     pub struct Intents {
