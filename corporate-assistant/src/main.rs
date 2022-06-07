@@ -61,6 +61,13 @@ fn main() {
                 .value_name("FILE")
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("disable-tts")
+                .long("disable-tts")
+                .help("Disables text-to-speech.")
+                .takes_value(false)
+                .required(false),
+        )
         .get_matches();
 
     let model_file_path = matches.value_of("model").expect_and_log("Set model file");
@@ -88,7 +95,11 @@ fn main() {
     // Record audio to mimic arecord e.g.
     // arecord -r 16000 -f S16_LE $filename.wav
     // if only utterance is completed
-    let mut speaker = Speaker::new().expect("Problem starting TTS engine");
+    let mut speaker = if matches.is_present("disable-tts") {
+        Speaker::none().expect("Problem creating empty TTS engine")
+    } else {
+        Speaker::new().expect("Problem starting TTS engine")
+    };
 
     let rec = Rc::new(Recorder::new());
 
