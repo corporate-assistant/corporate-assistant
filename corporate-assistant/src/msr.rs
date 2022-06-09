@@ -3,6 +3,7 @@ pub mod actions {
     use chrono::Datelike;
     use configuration::EmailConfig;
     use corporate_assistant::interpreter::CorporateAction;
+    use corporate_assistant::speaker::Speaker;
     use err_handling::ResultExt;
     use fltk::{app, button::Button, input::Input, input::SecretInput, prelude::*, window::Window};
     pub use github_crawler::{get_contributions, parse_config, Conf, Contrib, RepoContribs};
@@ -95,14 +96,16 @@ pub mod actions {
     }
 
     impl CorporateAction for MSR {
-        fn run(&self, tts: &mut tts::TTS) -> () {
+        fn run(&self, speaker: &mut Speaker) -> () {
             let time_frame = match self.time_frame {
                 1 => "weekly",
                 4 => "monthly",
                 _ => panic!("Error: Unsupported time frame value {}", self.time_frame),
             };
             let feedback = "Composing ".to_string() + time_frame + " status report";
-            tts.speak(feedback, true).expect("Problem with utterance");
+            speaker
+                .speak(&feedback, true)
+                .expect("Problem with utterance");
 
             // Make some test of github crawler
             let conf = Conf {
@@ -254,7 +257,7 @@ pub mod actions {
         #[test]
         #[ignore]
         fn test_msr() -> Result<(), String> {
-            let mut tts = TTS::default().expect("Problem starting TTS engine");
+            let mut speaker = Speaker::none().unwrap();
             let dummy_config = EmailConfig {
                 server: String::new(),
                 port: 0,
@@ -263,7 +266,7 @@ pub mod actions {
             };
 
             let msr = MSR::new(&None, "paddle.toml", 4, &dummy_config);
-            msr.run(&mut tts);
+            msr.run(&mut speaker);
             Ok(())
         }
     }

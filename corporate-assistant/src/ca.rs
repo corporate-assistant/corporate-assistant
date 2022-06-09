@@ -1,5 +1,6 @@
 pub mod actions {
     use corporate_assistant::interpreter::CorporateAction;
+    use corporate_assistant::speaker::Speaker;
     pub use custom_action::{action_creator, action_executor};
     //use config::configuration;
     use crate::config::configuration;
@@ -13,8 +14,9 @@ pub mod actions {
     }
 
     impl CorporateAction for CreateCustomAction {
-        fn run(&self, tts: &mut tts::TTS) -> () {
-            tts.speak("Please edit custom action script", true)
+        fn run(&self, speaker: &mut Speaker) -> () {
+            speaker
+                .speak("Please edit custom action script", true)
                 .expect("Problem with utterance");
             // Get user script name and pass it to be executed
             let custom_action_config_file =
@@ -36,8 +38,9 @@ pub mod actions {
     }
 
     impl CorporateAction for ExecuteCustomAction {
-        fn run(&self, tts: &mut tts::TTS) -> () {
-            tts.speak("Executing custom action", true)
+        fn run(&self, speaker: &mut Speaker) -> () {
+            speaker
+                .speak("Executing custom action", true)
                 .expect("Problem with utterance");
             action_executor(&self.script_);
         }
@@ -77,7 +80,7 @@ pub mod actions {
         #[test]
         #[ignore]
         fn test_custom_action() -> Result<(), String> {
-            let mut tts = TTS::default().expect("Problem starting TTS engine");
+            let mut speaker = Speaker::none().unwrap();
 
             let rec = Rc::new(Recorder::new());
             // local model . Change to yours if needed
@@ -89,7 +92,7 @@ pub mod actions {
                 ))
                 .unwrap();
 
-            CreateCustomAction::new(m, rec.clone()).run(&mut tts);
+            CreateCustomAction::new(m, rec.clone()).run(&mut speaker);
             Ok(())
         }
     }

@@ -1,5 +1,6 @@
 pub mod jira {
     use corporate_assistant::interpreter::CorporateAction;
+    use corporate_assistant::speaker::Speaker;
     use err_handling::ResultExt;
     use fltk::{
         app, button::Button, frame::Frame, input::SecretInput, menu::Choice, prelude::*,
@@ -10,16 +11,20 @@ pub mod jira {
     use std::collections::HashMap;
 
     impl CorporateAction for JIRA {
-        fn run(&self, tts: &mut tts::TTS) -> () {
+        fn run(&self, speaker: &mut Speaker) -> () {
             let feedback = "Creating JIRA issue. Please type your password and edit JIRA issue ";
-            tts.speak(feedback, true).expect("Problem with utterance");
+            speaker
+                .speak(feedback, true)
+                .expect("Problem with utterance");
 
             if let Some((pass, title, desc, epic)) = self.get_jira_input() {
-                tts.speak("Input send to JIRA", true)
+                speaker
+                    .speak("Input send to JIRA", true)
                     .expect("Problem with utterance");
-                block_on(self.submit(tts, &self.user, &pass, &title, &desc, epic));
+                block_on(self.submit(speaker, &self.user, &pass, &title, &desc, epic));
             } else {
-                tts.speak("Invalid password", true)
+                speaker
+                    .speak("Invalid password", true)
                     .expect_and_log("Invalid password");
             }
         }
@@ -255,7 +260,7 @@ pub mod jira {
 
         async fn submit(
             &self,
-            tts: &mut tts::TTS,
+            speaker: &mut Speaker,
             login: &str,
             pass: &str,
             title: &str,
@@ -288,7 +293,7 @@ pub mod jira {
 
             // Send an issue to JIRA
             self.submit_issue(
-                tts,
+                speaker,
                 &client,
                 login,
                 pass,
@@ -382,7 +387,7 @@ pub mod jira {
 
         fn submit_issue(
             &self,
-            tts: &mut tts::TTS,
+            speaker: &mut Speaker,
             client: &ReqwestClient,
             login: &str,
             pass: &str,
@@ -442,7 +447,9 @@ pub mod jira {
                                 "{} submitted to Sprint {} in JIRA",
                                 sprint_issues["issues"][0], sprint.name
                             );
-                            tts.speak(feedback, true).expect("Problem with utterance");
+                            speaker
+                                .speak(&feedback, true)
+                                .expect("Problem with utterance");
                         } else {
                             eprintln!(
                                 "Error {} adding {} to Sprint {}.",
@@ -484,7 +491,7 @@ pub mod jira {
         #[test]
         #[ignore]
         fn test_jira() -> Result<(), String> {
-            let mut tts = TTS::default().expect("Problem starting TTS engine");
+            let mut speaker = Speaker::none().unwrap();
             let organization_config_file =
                 configuration::CAConfig::new().get_organization_config("itp.toml");
             let org_info = configuration::parse_organization_config(&organization_config_file);
@@ -498,7 +505,7 @@ pub mod jira {
                 actual_config.project,
                 actual_config.epics,
             )
-            .run(&mut tts);
+            .run(&mut speaker);
             Ok(())
         }
     }

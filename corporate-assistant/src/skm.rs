@@ -1,6 +1,7 @@
 pub mod skm {
     use chrono::prelude::*;
     use corporate_assistant::interpreter::CorporateAction;
+    use corporate_assistant::speaker::Speaker;
     use err_handling::ResultExt;
     use fltk::{
         app, button::Button, frame::Frame, input::SecretInput, menu::Choice, prelude::*,
@@ -14,8 +15,8 @@ pub mod skm {
     type ReqwestClient = reqwest::blocking::Client;
 
     impl CorporateAction for SKM {
-        fn run(&self, tts: &mut tts::TTS) -> () {
-            block_on(self.submit(tts));
+        fn run(&self, speaker: &mut Speaker) -> () {
+            block_on(self.submit(speaker));
         }
     }
 
@@ -79,7 +80,7 @@ pub mod skm {
                 + "utes"
         }
 
-        async fn submit(&self, tts: &mut tts::TTS) {
+        async fn submit(&self, speaker: &mut Speaker) {
             // If there is proxy then pick first URL
             let client = match &self.proxy {
                 Some(org_proxies) => ReqwestClient::builder()
@@ -146,7 +147,9 @@ pub mod skm {
             let actual_response = res.expect_and_log("Error: unwrapping SKM response");
             let message = self.get_message(&actual_response, &self.from_to[0]).await;
             log::info!("SKM: uttered message: {}", &message);
-            tts.speak(message, true).expect("Problem with utterance");
+            speaker
+                .speak(&message, true)
+                .expect("Problem with utterance");
         }
     }
 
@@ -158,10 +161,9 @@ pub mod skm {
         use tts::*;
 
         #[test]
-        #[ignore]
         fn test_skm() -> Result<(), String> {
             init_logging_infrastructure();
-            let mut tts = TTS::default().expect("Problem starting TTS engine");
+            let mut speaker = Speaker::none().unwrap();
             // TODO: Polish characters support
             let skm = SKM::new(
                 "https://skm.trojmiasto.pl/".to_string(),
@@ -171,7 +173,7 @@ pub mod skm {
                     "Gdansk Port Lotniczy".to_string(),
                 ],
             )
-            .run(&mut tts);
+            .run(&mut speaker);
             Ok(())
         }
     }
