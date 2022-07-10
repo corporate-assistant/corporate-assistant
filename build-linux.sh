@@ -1,2 +1,2 @@
 #!/bin/bash
-LIBRARY_PATH=/home/jczaja/DEEPSPEECH/deepspeech-native cargo build
+LIBRARY_PATH=/home/jczaja/DEEPSPEECH/ cargo build

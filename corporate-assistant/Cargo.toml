@@ -15,7 +15,7 @@ err_handling = { path = "../err_handling" }
 github-crawler = { path = "../github-crawler" }
 custom_action = { path = "../custom_action" }
 mailer = { path = "../mailer" }
-tts = "0.15.2"
+tts = "0.22.4"
 chrono = "0.4"
 fltk = { version = "^1", features = ["fltk-bundled"] }
 dirs = "3.0.2"
