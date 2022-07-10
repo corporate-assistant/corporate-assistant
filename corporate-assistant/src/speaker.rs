@@ -1,12 +1,12 @@
-use tts::{Error, TTS};
+use tts::{Error, Tts};
 
 pub struct Speaker {
-    t: Option<TTS>,
+    t: Option<Tts>,
 }
 
 impl Speaker {
     pub fn new() -> Result<Speaker, Error> {
-        match TTS::default() {
+        match Tts::default() {
             Ok(tts) => Ok(Speaker { t: Some(tts) }),
             Err(e) => Err(e),
         }
