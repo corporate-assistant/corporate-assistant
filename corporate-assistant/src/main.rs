@@ -293,6 +293,8 @@ fn main() {
                 .expect("Error: Problem with utterance");
             // Make a GUI for helping user to label recording
             let result = labeling_assistant::labeling_assistant::run(
+                &intents,
+                &mut speaker,
                 &rec,
                 recorded_vec.to_vec(),
                 intents.get_commands(),
