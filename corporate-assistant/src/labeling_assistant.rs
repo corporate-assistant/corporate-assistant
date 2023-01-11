@@ -1,5 +1,9 @@
 pub mod labeling_assistant {
 
+    use crate::nlu;
+    use crate::Speaker;
+    use corporate_assistant::interpreter::Intents;
+    use err_handling::ResultExt;
     use fltk::{
         app, button::Button, frame::Frame, prelude::*, text::TextBuffer, text::TextEditor,
         window::Window,
@@ -7,6 +11,8 @@ pub mod labeling_assistant {
     pub use record::recorder::Recorder;
 
     pub fn run(
+        intents: &Intents,
+        speaker: &mut Speaker,
         rec: &Recorder,
         recorded_vec: Vec<i16>,
         commands_list: Vec<&str>,
@@ -48,7 +54,8 @@ pub mod labeling_assistant {
         te.set_buffer(Some(tb));
         te.set_insert_mode(true);
         let mut custom_label = Button::default().with_size(50, 0).with_label("Ok");
-        let _placeholder = Frame::default().with_size(80, 0);
+        let _placeholder = Frame::default().with_size(60, 0);
+        let mut runner = Button::default().with_size(40, 0).with_label("Run");
         let mut player = Button::default().with_size(50, 0).with_label("Play");
         let mut discard = Button::default().with_size(70, 0).with_label("Discard");
         hpack.end();
@@ -63,6 +70,7 @@ pub mod labeling_assistant {
 
         /* Event handling */
         custom_label.emit(s.clone(), String::from("_text_editor"));
+        runner.emit(s.clone(), String::from("_run"));
         player.emit(s.clone(), String::from("_play"));
         discard.emit(s.clone(), String::from("_discard"));
 
@@ -73,6 +81,14 @@ pub mod labeling_assistant {
                     //println!("===> Recieved {}", &(msg.clone()));
                     if msg == "_text_editor" {
                         return Some(String::from(&te.buffer().unwrap().text()));
+                    } else if msg == "_run" {
+                        let action = intents
+                            .get_action(&nlu::nlu::normalize_phrase(&String::from(
+                                &te.buffer().unwrap().text(),
+                            )))
+                            .expect_and_log("Error running action");
+                        action.run(speaker);
+                        return None;
                     } else if msg == "_play" {
                         rec.replay_recorded_vec(&recorded_vec);
                     } else if msg == "_discard" {
